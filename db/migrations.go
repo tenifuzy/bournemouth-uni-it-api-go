@@ -32,7 +32,7 @@ func RunMigrations(cfg *config.Config) error {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations",
+		"file://./migrations",
 		"postgres", driver)
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)

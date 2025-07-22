@@ -57,6 +57,10 @@ func (r *PostgresStudentRepository) GetAll() ([]Student, error) {
 		students = append(students, s)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
 	return students, nil
 }
 

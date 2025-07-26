@@ -37,7 +37,7 @@ func (c *Config) GetDBConnectionString() string {
 
 // GetDBConnectionStringWithoutDB returns the database connection string without specifying a database
 func (c *Config) GetDBConnectionStringWithoutDB() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=%s",
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=postgres sslmode=%s",
 		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBSSLMode)
 }
 

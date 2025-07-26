@@ -18,17 +18,17 @@ func main() {
 	// Initialize configuration
 	cfg := config.LoadConfig()
 
-	// Initialize database
+	// Run migrations (this will create the database if it doesn't exist)
+	if err := db.RunMigrations(cfg); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Initialize database connection
 	database, err := db.InitDB(cfg)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer database.Close()
-
-	// Run migrations
-	if err := db.RunMigrations(cfg); err != nil {
-		log.Fatalf("Failed to run migrations: %v", err)
-	}
 
 	// Setup router
 	r := router.SetupRouter(database)
@@ -38,4 +38,4 @@ func main() {
 	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
-}\
+}

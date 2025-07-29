@@ -65,3 +65,44 @@ func CreateDBIfNotExists(cfg *config.Config) error {
 
 	return nil
 }
+
+// InsertSampleData inserts sample data if the table is empty
+func InsertSampleData(db *sql.DB) error {
+	// Check if table has any data
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM students").Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to count students: %w", err)
+	}
+
+	if count > 0 {
+		log.Printf("Students table already has %d records", count)
+		return nil
+	}
+
+	// Insert sample data
+	sampleData := []struct {
+		firstName, lastName, email, studentID, course string
+		yearOfStudy int
+	}{
+		{"John", "Doe", "john.doe@bournemouth.ac.uk", "S12345678", "Information Technology", 2},
+		{"Jane", "Smith", "jane.smith@bournemouth.ac.uk", "S87654321", "Computer Science", 3},
+		{"Bob", "Johnson", "bob.johnson@bournemouth.ac.uk", "S11111111", "Software Engineering", 1},
+	}
+
+	for _, student := range sampleData {
+		_, err := db.Exec(`
+			INSERT INTO students (first_name, last_name, email, student_id, course, year_of_study)
+			VALUES ($1, $2, $3, $4, $5, $6)
+		`, student.firstName, student.lastName, student.email, student.studentID, student.course, student.yearOfStudy)
+		
+		if err != nil {
+			log.Printf("Warning: Failed to insert sample student %s %s: %v", student.firstName, student.lastName, err)
+		} else {
+			log.Printf("Inserted sample student: %s %s", student.firstName, student.lastName)
+		}
+	}
+
+	log.Println("Sample data insertion completed")
+	return nil
+}

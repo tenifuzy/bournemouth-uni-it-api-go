@@ -30,6 +30,11 @@ func main() {
 	}
 	defer database.Close()
 
+	// Insert sample data if table is empty
+	if err := db.InsertSampleData(database); err != nil {
+		log.Printf("Warning: Failed to insert sample data: %v", err)
+	}
+
 	// Setup router
 	r := router.SetupRouter(database)
 

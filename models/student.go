@@ -10,7 +10,7 @@ type Student struct {
 	ID          int       `json:"id"`
 	FirstName   string    `json:"first_name" binding:"required"`
 	LastName    string    `json:"last_name" binding:"required"`
-	Email       string    `json:"email" binding:"required,email"`
+	Email       string    `json:"email" binding:"required"`
 	StudentID   string    `json:"student_id" binding:"required"`
 	Course      string    `json:"course" binding:"required"`
 	YearOfStudy int       `json:"year_of_study" binding:"required"`
@@ -94,22 +94,32 @@ func (r *PostgresStudentRepository) Create(student *Student) error {
 
 // Update updates an existing student
 func (r *PostgresStudentRepository) Update(student *Student) error {
-	_, err := r.DB.Exec(`
+	err := r.DB.QueryRow(`
 		UPDATE students
 		SET first_name = $1, last_name = $2, email = $3, student_id = $4, course = $5, year_of_study = $6, updated_at = CURRENT_TIMESTAMP
 		WHERE id = $7
-	`, student.FirstName, student.LastName, student.Email, student.StudentID, student.Course, student.YearOfStudy, student.ID)
+		RETURNING created_at, updated_at
+	`, student.FirstName, student.LastName, student.Email, student.StudentID, student.Course, student.YearOfStudy, student.ID).
+		Scan(&student.CreatedAt, &student.UpdatedAt)
 	
-	if err != nil {
-		return err
-	}
-	
-	// Get the updated timestamp
-	return r.DB.QueryRow("SELECT updated_at FROM students WHERE id = $1", student.ID).Scan(&student.UpdatedAt)
+	return err
 }
 
 // Delete removes a student from the database
 func (r *PostgresStudentRepository) Delete(id int) error {
-	_, err := r.DB.Exec("DELETE FROM students WHERE id = $1", id)
-	return err
+	result, err := r.DB.Exec("DELETE FROM students WHERE id = $1", id)
+	if err != nil {
+		return err
+	}
+	
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	
+	return nil
 }

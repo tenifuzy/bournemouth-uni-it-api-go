@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/bournemouth-uni-it-api-go/models"
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 // StudentHandler handles HTTP requests for students
@@ -64,9 +67,32 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	
+	// Basic email validation
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(student.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
 
 	if err := h.Repo.Create(&student); err != nil {
 		log.Printf("Error creating student: %v", err)
+		
+		// Handle PostgreSQL constraint violations
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code {
+			case "23505": // unique_violation
+				if strings.Contains(pqErr.Message, "email") {
+					c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+				} else if strings.Contains(pqErr.Message, "student_id") {
+					c.JSON(http.StatusConflict, gin.H{"error": "Student ID already exists"})
+				} else {
+					c.JSON(http.StatusConflict, gin.H{"error": "Duplicate entry"})
+				}
+				return
+			}
+		}
+		
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create student"})
 		return
 	}
@@ -101,6 +127,13 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	
+	// Basic email validation
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(student.Email) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
 
 	// Set the ID from the URL parameter
 	student.ID = id
@@ -108,6 +141,22 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 	// Update the student
 	if err := h.Repo.Update(&student); err != nil {
 		log.Printf("Error updating student: %v", err)
+		
+		// Handle PostgreSQL constraint violations
+		if pqErr, ok := err.(*pq.Error); ok {
+			switch pqErr.Code {
+			case "23505": // unique_violation
+				if strings.Contains(pqErr.Message, "email") {
+					c.JSON(http.StatusConflict, gin.H{"error": "Email already exists"})
+				} else if strings.Contains(pqErr.Message, "student_id") {
+					c.JSON(http.StatusConflict, gin.H{"error": "Student ID already exists"})
+				} else {
+					c.JSON(http.StatusConflict, gin.H{"error": "Duplicate entry"})
+				}
+				return
+			}
+		}
+		
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update student"})
 		return
 	}
@@ -138,6 +187,10 @@ func (h *StudentHandler) DeleteStudent(c *gin.Context) {
 
 	// Delete the student
 	if err := h.Repo.Delete(id); err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Student not found"})
+			return
+		}
 		log.Printf("Error deleting student: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete student"})
 		return

@@ -2,6 +2,7 @@ package router
 
 import (
 	"database/sql"
+	"net/http"
 
 	"github.com/bournemouth-uni-it-api-go/handlers"
 	"github.com/bournemouth-uni-it-api-go/middleware"
@@ -18,6 +19,10 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 
 	// Create handlers
 	studentHandler := handlers.NewStudentHandler(db)
+
+	// Serve frontend
+	r.StaticFile("/", "./frontend/index.html")
+	r.StaticFile("/index.html", "./frontend/index.html")
 
 	// Health check endpoint
 	r.GET("/healthcheck", studentHandler.HealthCheck)

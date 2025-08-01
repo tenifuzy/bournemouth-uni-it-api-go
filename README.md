@@ -21,14 +21,33 @@ A RESTful API for managing Bournemouth University IT students built with Go and 
 
 ## Quick Start
 
-### 1. Clone the Repository
+### Option 1: Using Docker (Recommended)
+
+1. **Clone the Repository**
 ```bash
 git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
 cd bournemouth-uni-it-api-go
 ```
 
-### 2. Set Up Environment Variables
-Copy the example environment file and configure your database settings:
+2. **Start with Docker Compose**
+```bash
+docker-compose up -d
+```
+
+3. **Access the Application**
+- **Web Interface**: http://localhost:8080
+- **API**: http://localhost:8080/api/v1/students
+- **Health Check**: http://localhost:8080/healthcheck
+
+### Option 2: Local Development
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
+cd bournemouth-uni-it-api-go
+```
+
+2. **Set Up Environment Variables**
 ```bash
 cp .env.example .env
 ```
@@ -44,17 +63,28 @@ DB_SSL_MODE=disable
 SERVER_PORT=8080
 ```
 
-### 3. Install Dependencies
+3. **Install Dependencies**
 ```bash
 go mod download
 ```
 
-### 4. Start the API
+4. **Start PostgreSQL** (if not using Docker)
+```bash
+docker-compose up postgres -d
+```
+
+5. **Start the API**
 ```bash
 go run main.go
 ```
 
-The API will be available at: **http://localhost:8080**
+The application will be available at: **http://localhost:8080**
+
+## Web Interface
+
+The application includes a web-based frontend for managing students:
+- **URL**: http://localhost:8080
+- **Features**: Add, view, edit, and delete students through a user-friendly interface
 
 ## API Documentation
 
@@ -185,14 +215,41 @@ bournemouth-uni-it-api-go/
 
 Import the Postman collection from `postman/bournemouth_uni_it_api.json` to test all API endpoints with pre-configured requests.
 
+## Docker Commands
+
+### Build and Run
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up --build -d
+```
+
+### Database Management
+```bash
+# Access PostgreSQL container
+docker-compose exec postgres psql -U postgres -d student_db
+
+# View database logs
+docker-compose logs postgres
+```
+
 ## Development
 
 ### Adding New Features
 1. Create feature branch: `git checkout -b feature/new-feature`
 2. Make changes and add tests
 3. Run tests: `go test ./tests -v`
-4. Commit changes: `git commit -m "Add new feature"`
-5. Push and create pull request
+4. Test with Docker: `docker-compose up --build -d`
+5. Commit changes: `git commit -m "Add new feature"`
+6. Push and create pull request
 
 ### Code Style
 - Follow Go conventions and best practices

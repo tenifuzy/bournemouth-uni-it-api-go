@@ -11,7 +11,7 @@ bin/
 
 # Output of the go coverage tool
 *.out
-*.html
+coverage.html
 
 # Dependency directories
 vendor/

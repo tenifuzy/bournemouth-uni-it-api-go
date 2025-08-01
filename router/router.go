@@ -2,7 +2,6 @@ package router
 
 import (
 	"database/sql"
-	"net/http"
 
 	"github.com/bournemouth-uni-it-api-go/handlers"
 	"github.com/bournemouth-uni-it-api-go/middleware"

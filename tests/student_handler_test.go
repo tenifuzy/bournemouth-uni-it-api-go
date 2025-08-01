@@ -52,7 +52,7 @@ func setupTestRouter() (*gin.Engine, *MockStudentRepository) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	mockRepo := new(MockStudentRepository)
-	
+
 	// Create a test handler with the mock repository
 	handler := &handlers.StudentHandler{
 		Repo: mockRepo,
@@ -74,8 +74,8 @@ func TestGetAllStudents(t *testing.T) {
 
 	// Mock data
 	students := []models.Student{
-		{ID: 1, FirstName: "John", LastName: "Doe", Email: "john@example.com", StudentID: "S12345", Course: "IT", YearOfStudy: 2},
-		{ID: 2, FirstName: "Jane", LastName: "Smith", Email: "jane@example.com", StudentID: "S67890", Course: "IT", YearOfStudy: 3},
+		{ID: 1, FirstName: "John", LastName: "Doe", Email: "john@example.com", StudentID: "S12346", Course: "IT", YearOfStudy: 2},
+		{ID: 2, FirstName: "Jane", LastName: "Smith", Email: "jane@example.com", StudentID: "S67891", Course: "IT", YearOfStudy: 3},
 	}
 
 	// Set expectations
@@ -88,7 +88,7 @@ func TestGetAllStudents(t *testing.T) {
 
 	// Assert response
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response []models.Student
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -114,7 +114,7 @@ func TestGetStudentByID(t *testing.T) {
 
 	// Assert response
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response models.Student
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -134,11 +134,11 @@ func TestCreateStudent(t *testing.T) {
 
 	// Mock data
 	student := models.Student{
-		FirstName: "New", 
-		LastName: "Student", 
-		Email: "new@example.com", 
-		StudentID: "S99999", 
-		Course: "IT", 
+		FirstName:   "New",
+		LastName:    "Student",
+		Email:       "new@example.com",
+		StudentID:   "S99999",
+		Course:      "IT",
 		YearOfStudy: 1,
 	}
 
@@ -157,7 +157,7 @@ func TestCreateStudent(t *testing.T) {
 
 	// Assert response
 	assert.Equal(t, http.StatusCreated, w.Code)
-	
+
 	var response models.Student
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
@@ -171,11 +171,11 @@ func TestUpdateStudent(t *testing.T) {
 	// Mock data
 	existingStudent := &models.Student{ID: 1, FirstName: "John", LastName: "Doe"}
 	updatedStudent := models.Student{
-		FirstName: "Updated", 
-		LastName: "Student", 
-		Email: "updated@example.com", 
-		StudentID: "S11111", 
-		Course: "IT", 
+		FirstName:   "Updated",
+		LastName:    "Student",
+		Email:       "updated@example.com",
+		StudentID:   "S11111",
+		Course:      "IT",
 		YearOfStudy: 2,
 	}
 
@@ -242,7 +242,7 @@ func TestHealthCheck(t *testing.T) {
 
 	// Assert response
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)

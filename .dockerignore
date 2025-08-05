@@ -1,10 +1,16 @@
+# Ignore test and debug files
+*_test.go
+debug_*.go
+test_*.go
+*.bat
+
+# Ignore development files
+.env
 .git
 .gitignore
 README.md
-Dockerfile
-.dockerignore
-docker-compose.yml
-.env
-.env.example
-bin/
-*.log
+LICENSE
+
+# Ignore build artifacts
+*.exe
+main

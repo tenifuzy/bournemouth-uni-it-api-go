@@ -17,27 +17,61 @@ A RESTful API for managing Bournemouth University IT students built with Go and 
 
 - **Go 1.21** or higher
 - **PostgreSQL 12** or higher
+- **Docker** (for containerized deployment)
 - **Git** (for cloning the repository)
 
 ## Quick Start
 
 ### Option 1: Using Docker (Recommended)
 
-1. **Clone the Repository**
+#### Method A: Using the provided script
 ```bash
 git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
 cd bournemouth-uni-it-api-go
+chmod +x run-no-port-conflict.sh
+./run-no-port-conflict.sh
 ```
 
-2. **Start with Docker Compose**
+#### Method B: Manual Docker commands
 ```bash
-docker-compose up -d
+# 1. Create Docker network
+docker network create app-network
+
+# 2. Start PostgreSQL container
+docker run -d \
+  --name postgres_db \
+  --network app-network \
+  -e POSTGRES_DB=student_db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5433:5432 \
+  postgres:15-alpine
+
+# 3. Wait for PostgreSQL to be ready
+until docker exec postgres_db pg_isready -U postgres >/dev/null 2>&1; do
+  echo "Waiting for PostgreSQL..."
+  sleep 3
+done
+
+# 4. Start the application
+docker run -d \
+  --name student_api \
+  --network app-network \
+  -e DB_HOST=postgres_db \
+  -e DB_PORT=5432 \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=postgres \
+  -e DB_NAME=student_db \
+  -e DB_SSL_MODE=disable \
+  -e SERVER_PORT=8080 \
+  -p 8080:8080 \
+  tenifuzy01/v1:latest
 ```
 
-3. **Access the Application**
-- **Web Interface**: http://localhost:8080
+#### Access the Application
 - **API**: http://localhost:8080/api/v1/students
 - **Health Check**: http://localhost:8080/healthcheck
+- **PostgreSQL**: localhost:5433
 
 ### Option 2: Local Development
 
@@ -79,12 +113,6 @@ go run main.go
 ```
 
 The application will be available at: **http://localhost:8080**
-
-## Web Interface
-
-The application includes a web-based frontend for managing students:
-- **URL**: http://localhost:8080
-- **Features**: Add, view, edit, and delete students through a user-friendly interface
 
 ## API Documentation
 
@@ -217,28 +245,59 @@ Import the Postman collection from `postman/bournemouth_uni_it_api.json` to test
 
 ## Docker Commands
 
-### Build and Run
+### Using Docker Run
+
+#### Quick Start Script
 ```bash
-# Build and start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Rebuild after code changes
-docker-compose up --build -d
+# Make script executable and run
+chmod +x run-no-port-conflict.sh
+./run-no-port-conflict.sh
 ```
 
-### Database Management
+#### Manual Commands
 ```bash
-# Access PostgreSQL container
-docker-compose exec postgres psql -U postgres -d student_db
+# Create network
+docker network create app-network
 
-# View database logs
-docker-compose logs postgres
+# Start PostgreSQL
+docker run -d --name postgres_db --network app-network \
+  -e POSTGRES_DB=student_db -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:15-alpine
+
+# Start application
+docker run -d --name student_api --network app-network \
+  -e DB_HOST=postgres_db -e DB_PORT=5432 -e DB_USER=postgres \
+  -e DB_PASSWORD=postgres -e DB_NAME=student_db \
+  -e DB_SSL_MODE=disable -e SERVER_PORT=8080 \
+  -p 8080:8080 tenifuzy01/v1:latest
+```
+
+#### Container Management
+```bash
+# View running containers
+docker ps
+
+# View logs
+docker logs student_api
+docker logs postgres_db
+
+# Stop containers
+docker stop student_api postgres_db
+
+# Remove containers
+docker rm student_api postgres_db
+
+# Remove network
+docker network rm app-network
+```
+
+### Database Access
+```bash
+# Access PostgreSQL container directly
+docker exec -it postgres_db psql -U postgres -d student_db
+
+# Access from host (if psql is installed)
+psql -h localhost -p 5433 -U postgres -d student_db
 ```
 
 ## Development
@@ -246,10 +305,19 @@ docker-compose logs postgres
 ### Adding New Features
 1. Create feature branch: `git checkout -b feature/new-feature`
 2. Make changes and add tests
-3. Run tests: `go test ./tests -v`
-4. Test with Docker: `docker-compose up --build -d`
+3. Test locally: `go test ./tests -v`
+4. Test with Docker: `./run-no-port-conflict.sh`
 5. Commit changes: `git commit -m "Add new feature"`
 6. Push and create pull request
+
+### Docker Development
+```bash
+# Rebuild image after code changes
+docker build -t tenifuzy01/v1:latest .
+
+# Clean up and restart
+./run-no-port-conflict.sh
+```
 
 ### Code Style
 - Follow Go conventions and best practices
@@ -261,19 +329,25 @@ docker-compose logs postgres
 
 ### Common Issues
 
+**Docker Container Exits:**
+- Check logs: `docker logs student_api`
+- Ensure PostgreSQL is running: `docker ps`
+- Verify network connectivity: `docker network ls`
+
+**Port Already in Use:**
+- PostgreSQL port conflict: Use script with port 5433
+- Application port conflict: Change `-p 8080:8080` to `-p 8081:8080`
+- Kill existing processes: `sudo lsof -ti:5432 | xargs sudo kill -9`
+
 **Database Connection Error:**
-- Verify PostgreSQL is running
-- Check database credentials in `.env` file
-- Ensure database exists or API has permission to create it
+- Ensure containers are on same network
+- Check environment variables are correct
+- Wait for PostgreSQL to be ready before starting app
 
 **Migration Errors:**
 - Check migration files in `migrations/` directory
 - Verify database user has CREATE/ALTER permissions
-- Check migration file naming convention
-
-**Port Already in Use:**
-- Change `SERVER_PORT` in `.env` file
-- Kill process using the port: `lsof -ti:8080 | xargs kill`
+- Ensure database container is healthy
 
 ## Contributing
 

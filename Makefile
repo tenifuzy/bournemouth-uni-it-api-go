@@ -34,7 +34,8 @@ docker-build: ## Build Docker image
 	docker build -t $(DOCKER_IMAGE) .
 
 docker-up: ## Start all services with Docker Compose
-	docker compose down 2>/dev/null || true
+	docker stop postgres_db student_api 2>/dev/null || true
+	docker rm postgres_db student_api 2>/dev/null || true
 	docker compose up -d
 
 docker-down: ## Stop all services

@@ -3,14 +3,24 @@
 debug_*.go
 test_*.go
 *.bat
+*.sh
 
 # Ignore development files
 .env
+.env.docker
 .git
 .gitignore
 README.md
 LICENSE
+docker-commands.md
+postman/
 
 # Ignore build artifacts
 *.exe
 main
+
+# Keep only necessary files
+!frontend/
+!migrations/
+!go.mod
+!go.sum

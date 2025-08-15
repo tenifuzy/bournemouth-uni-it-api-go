@@ -15,13 +15,13 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	// Use middleware
 	r.Use(gin.Recovery())
 	r.Use(middleware.Logger())
-
+	
 	// Create handlers
 	studentHandler := handlers.NewStudentHandler(db)
 
-	// Serve frontend
+	// Serve your existing frontend
 	r.StaticFile("/", "./frontend/index.html")
-	r.StaticFile("/index.html", "./frontend/index.html")
+	r.Static("/static", "./frontend/static")
 
 	// Health check endpoint
 	r.GET("/healthcheck", studentHandler.HealthCheck)

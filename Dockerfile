@@ -22,6 +22,7 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/frontend ./frontend
 COPY wait-for-db.sh .
 RUN chmod +x wait-for-db.sh
 

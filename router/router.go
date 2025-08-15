@@ -2,6 +2,7 @@ package router
 
 import (
 	"database/sql"
+	"path/filepath"
 
 	"github.com/bournemouth-uni-it-api-go/handlers"
 	"github.com/bournemouth-uni-it-api-go/middleware"
@@ -11,26 +12,29 @@ import (
 // SetupRouter configures the API routes
 func SetupRouter(db *sql.DB) *gin.Engine {
 	r := gin.New()
-	
+
 	// Use middleware
 	r.Use(gin.Recovery())
 	r.Use(middleware.Logger())
-	
+
 	// Create handlers
 	studentHandler := handlers.NewStudentHandler(db)
 
-	// Serve static files from frontend directory
-	r.Static("/static", "./frontend/static")
-	
-	// Serve the main HTML file at root
+	// Absolute path to frontend inside the container
+	frontendPath := "/root/frontend"
+
+	// Serve all static files (CSS, JS, images, etc.)
+	r.Static("/static", filepath.Join(frontendPath, "static"))
+
+	// Serve main HTML file at root
 	r.GET("/", func(c *gin.Context) {
-		c.File("./frontend/index.html")
+		c.File(filepath.Join(frontendPath, "index.html"))
 	})
 	r.GET("/index.html", func(c *gin.Context) {
-		c.File("./frontend/index.html")
+		c.File(filepath.Join(frontendPath, "index.html"))
 	})
-	
-	// Add a test route to verify the server is working
+
+	// Optional test route
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Server is working"})
 	})

@@ -26,6 +26,9 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	r.GET("/", func(c *gin.Context) {
 		c.File("./frontend/index.html")
 	})
+	r.GET("/index.html", func(c *gin.Context) {
+		c.File("./frontend/index.html")
+	})
 	
 	// Add a test route to verify the server is working
 	r.GET("/test", func(c *gin.Context) {

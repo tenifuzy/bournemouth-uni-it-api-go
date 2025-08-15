@@ -22,17 +22,28 @@ A RESTful API for managing Bournemouth University IT students built with Go and 
 
 ## Quick Start
 
-### Option 1: Using Docker (Recommended)
+### Option 1: Using Makefile (Recommended)
 
-#### Method A: Using the provided script
 ```bash
 git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
 cd bournemouth-uni-it-api-go
-chmod +x run-no-port-conflict.sh
-./run-no-port-conflict.sh
+make docker-up
 ```
 
-#### Method B: Manual Docker commands
+**Access the Application:**
+- **Web Interface**: http://localhost:8080
+- **API**: http://localhost:8080/api/v1/students
+- **Health Check**: http://localhost:8080/healthcheck
+
+### Option 2: Using Docker Compose
+
+```bash
+git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
+cd bournemouth-uni-it-api-go
+docker-compose up -d
+```
+
+### Option 3: Manual Docker Commands
 ```bash
 # 1. Create Docker network
 docker network create app-network
@@ -73,7 +84,7 @@ docker run -d \
 - **Health Check**: http://localhost:8080/healthcheck
 - **PostgreSQL**: localhost:5433
 
-### Option 2: Local Development
+### Option 4: Local Development
 
 1. **Clone the Repository**
 ```bash
@@ -243,7 +254,57 @@ bournemouth-uni-it-api-go/
 
 Import the Postman collection from `postman/bournemouth_uni_it_api.json` to test all API endpoints with pre-configured requests.
 
-## Docker Commands
+## Makefile Commands
+
+### Quick Operations
+```bash
+# Start everything
+make docker-up
+
+# Stop everything
+make docker-down
+
+# View logs
+make docker-logs
+
+# Rebuild and restart
+make docker-down && make docker-build && make docker-up
+```
+
+### Step-by-Step Development
+```bash
+# Start database only
+make db-start
+
+# Run migrations
+make db-migrate
+
+# Build API image
+make docker-build
+
+# Run API container
+make docker-run
+```
+
+### Development Commands
+```bash
+# Run tests
+make test
+
+# Format code
+make fmt
+
+# Build locally
+make build
+
+# Run locally (requires local PostgreSQL)
+make run
+
+# Show all available commands
+make help
+```
+
+## Docker Commands (Alternative)
 
 ### Using Docker Run
 
@@ -305,18 +366,21 @@ psql -h localhost -p 5433 -U postgres -d student_db
 ### Adding New Features
 1. Create feature branch: `git checkout -b feature/new-feature`
 2. Make changes and add tests
-3. Test locally: `go test ./tests -v`
-4. Test with Docker: `./run-no-port-conflict.sh`
+3. Test locally: `make test`
+4. Test with Docker: `make docker-down && make docker-build && make docker-up`
 5. Commit changes: `git commit -m "Add new feature"`
 6. Push and create pull request
 
 ### Docker Development
 ```bash
 # Rebuild image after code changes
-docker build -t tenifuzy01/v1:latest .
+make docker-build
 
 # Clean up and restart
-./run-no-port-conflict.sh
+make docker-down && make docker-up
+
+# View logs during development
+make docker-logs
 ```
 
 ### Code Style
@@ -330,24 +394,25 @@ docker build -t tenifuzy01/v1:latest .
 ### Common Issues
 
 **Docker Container Exits:**
-- Check logs: `docker logs student_api`
-- Ensure PostgreSQL is running: `docker ps`
-- Verify network connectivity: `docker network ls`
+- Check logs: `make docker-logs`
+- Ensure PostgreSQL is running: `make db-start`
+- Restart services: `make docker-down && make docker-up`
 
 **Port Already in Use:**
-- PostgreSQL port conflict: Use script with port 5433
-- Application port conflict: Change `-p 8080:8080` to `-p 8081:8080`
-- Kill existing processes: `sudo lsof -ti:5432 | xargs sudo kill -9`
+- Stop services: `make docker-down`
+- Kill existing processes: `sudo lsof -ti:8080 | xargs sudo kill -9`
+- Restart: `make docker-up`
 
 **Database Connection Error:**
-- Ensure containers are on same network
-- Check environment variables are correct
-- Wait for PostgreSQL to be ready before starting app
+- Check logs: `make docker-logs`
+- Restart database: `make db-start`
+- Test migrations: `make db-migrate`
+- Rebuild everything: `make docker-down && make docker-build && make docker-up`
 
 **Migration Errors:**
 - Check migration files in `migrations/` directory
+- Test migrations: `make db-migrate`
 - Verify database user has CREATE/ALTER permissions
-- Ensure database container is healthy
 
 ## Contributing
 

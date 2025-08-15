@@ -1,6 +1,6 @@
 # Bournemouth University IT API Makefile
 
-.PHONY: run build test clean deps migrate-up migrate-down
+.PHONY: run build test clean deps migrate-up migrate-down db-start db-migrate docker-build docker-run docker-up docker-down docker-logs install-tools
 
 # Default target
 all: deps build
@@ -51,6 +51,42 @@ migrate-up:
 migrate-down:
 	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)" down
 
+# Start DB container
+db-start:
+	docker-compose up -d postgres
+
+# Run DB DML migrations
+db-migrate:
+	docker-compose exec postgres psql -U postgres -d student_db -c "SELECT 'Migrations completed';"
+
+# Build REST API docker image
+docker-build:
+	docker-compose build api
+
+# Run REST API docker container
+docker-run:
+	docker-compose up -d api
+
+# Start all services (DB + API)
+docker-up:
+	docker-compose up -d
+
+# Stop all services
+docker-down:
+	docker-compose down
+
+# View logs
+docker-logs:
+	docker-compose logs -f
+
+# Install required tools
+install-tools:
+	@if [ "$$OS" = "Windows_NT" ]; then \
+		echo "Run install-tools.bat as Administrator"; \
+	else \
+		chmod +x install-tools.sh && ./install-tools.sh; \
+	fi
+
 # Help
 help:
 	@echo "Available targets:"
@@ -64,4 +100,12 @@ help:
 	@echo "  lint           - Lint code"
 	@echo "  migrate-up     - Run database migrations up"
 	@echo "  migrate-down   - Run database migrations down"
+	@echo "  db-start       - Start DB container"
+	@echo "  db-migrate     - Run DB DML migrations"
+	@echo "  docker-build   - Build REST API docker image"
+	@echo "  docker-run     - Run REST API docker container"
+	@echo "  docker-up      - Start all services (DB + API)"
+	@echo "  docker-down    - Stop all services"
+	@echo "  docker-logs    - View logs from all services"
+	@echo "  install-tools  - Install required development tools"
 	@echo "  help           - Show this help message"

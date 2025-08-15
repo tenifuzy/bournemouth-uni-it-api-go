@@ -1,111 +1,73 @@
-# Bournemouth University IT API Makefile
+.PHONY: help build run test clean docker-build docker-up docker-down docker-logs db-start db-migrate fmt
 
-.PHONY: run build test clean deps migrate-up migrate-down db-start db-migrate docker-build docker-run docker-up docker-down docker-logs install-tools
+# Variables
+APP_NAME=student_api
+DOCKER_IMAGE=tenifuzy01/v1:latest
+POSTGRES_CONTAINER=postgres_db
 
 # Default target
-all: deps build
+help: ## Show this help message
+	@echo "Available commands:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-# Install dependencies
-deps:
-	go mod download
-	go mod tidy
+# Local development
+build: ## Build the application locally
+	go build -o main .
 
-# Run the application
-run:
+run: ## Run the application locally (requires local PostgreSQL)
 	go run main.go
 
-# Build the application
-build:
-	go build -o bin/api main.go
-
-# Run tests
-test:
+test: ## Run unit tests
 	go test ./tests -v
 
-# Run tests with coverage
-test-coverage:
+test-coverage: ## Run tests with coverage
 	go test ./tests -v -cover
 
-# Clean build artifacts
-clean:
-	rm -rf bin/
-
-# Format code
-fmt:
+fmt: ## Format Go code
 	go fmt ./...
 
-# Lint code (requires golangci-lint)
-lint:
-	golangci-lint run
+clean: ## Clean build artifacts
+	rm -f main
 
-# Create migration files
-migrate-create:
-	@read -p "Enter migration name: " name; \
-	migrate create -ext sql -dir migrations $$name
+# Docker operations
+docker-build: ## Build Docker image
+	docker build -t $(DOCKER_IMAGE) .
 
-# Run database migrations up
-migrate-up:
-	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)" up
+docker-up: ## Start all services with Docker Compose
+	docker compose up -d
 
-# Run database migrations down
-migrate-down:
-	migrate -path migrations -database "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)" down
+docker-down: ## Stop all services
+	docker compose down
 
-# Start DB container
-db-start:
-	docker-compose up -d postgres
+docker-logs: ## View logs from all services
+	docker compose logs -f
 
-# Run DB DML migrations
-db-migrate:
-	docker-compose exec postgres psql -U postgres -d student_db -c "SELECT 'Migrations completed';"
+docker-restart: ## Restart all services
+	docker compose restart
 
-# Build REST API docker image
-docker-build:
-	docker-compose build api
+# Database operations
+db-start: ## Start only PostgreSQL container
+	docker compose up postgres -d
 
-# Run REST API docker container
-docker-run:
-	docker-compose up -d api
+db-stop: ## Stop PostgreSQL container
+	docker compose stop postgres
 
-# Start all services (DB + API)
-docker-up:
-	docker-compose up -d
+db-migrate: ## Run database migrations (requires running database)
+	@echo "Migrations are automatically run when the application starts"
 
-# Stop all services
-docker-down:
-	docker-compose down
+# Development workflow
+dev-setup: ## Set up development environment
+	cp .env.example .env
+	go mod download
 
-# View logs
-docker-logs:
-	docker-compose logs -f
+dev-restart: docker-down docker-build docker-up ## Rebuild and restart everything
 
-# Install required tools
-install-tools:
-	@if [ "$$OS" = "Windows_NT" ]; then \
-		echo "Run install-tools.bat as Administrator"; \
-	else \
-		chmod +x install-tools.sh && ./install-tools.sh; \
-	fi
+# Cleanup
+docker-clean: ## Remove containers and images
+	docker compose down -v
+	docker rmi $(DOCKER_IMAGE) 2>/dev/null || true
 
-# Help
-help:
-	@echo "Available targets:"
-	@echo "  run            - Run the application"
-	@echo "  build          - Build the application"
-	@echo "  test           - Run tests"
-	@echo "  test-coverage  - Run tests with coverage"
-	@echo "  deps           - Install dependencies"
-	@echo "  clean          - Clean build artifacts"
-	@echo "  fmt            - Format code"
-	@echo "  lint           - Lint code"
-	@echo "  migrate-up     - Run database migrations up"
-	@echo "  migrate-down   - Run database migrations down"
-	@echo "  db-start       - Start DB container"
-	@echo "  db-migrate     - Run DB DML migrations"
-	@echo "  docker-build   - Build REST API docker image"
-	@echo "  docker-run     - Run REST API docker container"
-	@echo "  docker-up      - Start all services (DB + API)"
-	@echo "  docker-down    - Stop all services"
-	@echo "  docker-logs    - View logs from all services"
-	@echo "  install-tools  - Install required development tools"
-	@echo "  help           - Show this help message"
+# Quick commands
+up: docker-up ## Alias for docker-up
+down: docker-down ## Alias for docker-down
+logs: docker-logs ## Alias for docker-logs

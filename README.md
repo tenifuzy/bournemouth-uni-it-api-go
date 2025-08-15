@@ -40,7 +40,7 @@ make docker-up
 ```bash
 git clone https://github.com/yourusername/bournemouth-uni-it-api-go.git
 cd bournemouth-uni-it-api-go
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Option 3: Manual Docker Commands
@@ -115,7 +115,7 @@ go mod download
 
 4. **Start PostgreSQL** (if not using Docker)
 ```bash
-docker-compose up postgres -d
+docker compose up postgres -d
 ```
 
 5. **Start the API**

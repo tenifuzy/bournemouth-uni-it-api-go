@@ -1,4 +1,4 @@
-.PHONY: help build run test clean docker-build docker-up docker-down docker-logs db-start db-migrate fmt
+.PHONY: help build run test clean docker-build docker-up docker-down docker-logs db-start db-migrate fmt deps lint ci-local
 
 # Variables
 APP_NAME=student_api
@@ -25,6 +25,17 @@ test-coverage: ## Run tests with coverage
 
 fmt: ## Format Go code
 	go fmt ./...
+
+deps: ## Install dependencies
+	go mod download
+	go mod tidy
+
+lint: ## Run code linting
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run; \
+	else \
+		echo "golangci-lint not found, skipping linting"; \
+	fi
 
 clean: ## Clean build artifacts
 	rm -f main
@@ -79,3 +90,10 @@ docker-force-clean: ## Force remove all containers and networks
 up: docker-up ## Alias for docker-up
 down: docker-down ## Alias for docker-down
 logs: docker-logs ## Alias for docker-logs
+
+ci-local: ## Run CI pipeline locally
+	@if [ "$$OS" = "Windows_NT" ]; then \
+		.\run-ci.bat; \
+	else \
+		chmod +x run-ci.sh && ./run-ci.sh; \
+	fi

@@ -2,6 +2,8 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: postgres_db
+    networks:
+      - app-network
     environment:
       POSTGRES_DB: student_db
       POSTGRES_USER: postgres
@@ -19,6 +21,8 @@ services:
   app:
     build: .
     container_name: student_api
+    networks:
+      - app-network
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -36,3 +40,7 @@ services:
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

@@ -20,11 +20,11 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	studentHandler := handlers.NewStudentHandler(db)
 
 	// Serve static files from frontend directory
-	r.Static("/static", "/root/frontend/static")
+	r.Static("/static", "./frontend/static")
 	
 	// Serve the main HTML file at root
 	r.GET("/", func(c *gin.Context) {
-		c.File("/root/frontend/index.html")
+		c.File("./frontend/index.html")
 	})
 	
 	// Add a test route to verify the server is working

@@ -24,6 +24,9 @@ COPY --from=builder /app/main .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/frontend ./frontend
 
+# Set working directory to where files are copied
+WORKDIR /root
+
 # Expose port
 EXPOSE 8080
 

@@ -75,14 +75,14 @@ func (r *PostgresStudentRepository) GetByID(id int) (*Student, error) {
 		SELECT id, first_name, last_name, email, student_id, course, year_of_study, created_at, updated_at 
 		FROM students WHERE id = $1
 	`, id).Scan(&s.ID, &s.FirstName, &s.LastName, &s.Email, &s.StudentID, &s.Course, &s.YearOfStudy, &s.CreatedAt, &s.UpdatedAt)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, err
 	}
-	
+
 	return &s, nil
 }
 
@@ -105,7 +105,7 @@ func (r *PostgresStudentRepository) Update(student *Student) error {
 		RETURNING created_at, updated_at
 	`, student.FirstName, student.LastName, student.Email, student.StudentID, student.Course, student.YearOfStudy, student.ID).
 		Scan(&student.CreatedAt, &student.UpdatedAt)
-	
+
 	return err
 }
 
@@ -115,15 +115,15 @@ func (r *PostgresStudentRepository) Delete(id int) error {
 	if err != nil {
 		return err
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-	
+
 	if rowsAffected == 0 {
 		return sql.ErrNoRows
 	}
-	
+
 	return nil
 }

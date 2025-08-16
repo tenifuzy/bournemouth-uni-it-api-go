@@ -67,7 +67,7 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	// Basic email validation
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(student.Email) {
@@ -77,7 +77,7 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 
 	if err := h.Repo.Create(&student); err != nil {
 		log.Printf("Error creating student: %v", err)
-		
+
 		// Handle PostgreSQL constraint violations
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code {
@@ -92,7 +92,7 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 				return
 			}
 		}
-		
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create student"})
 		return
 	}
@@ -127,7 +127,7 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	// Basic email validation
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	if !emailRegex.MatchString(student.Email) {
@@ -141,7 +141,7 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 	// Update the student
 	if err := h.Repo.Update(&student); err != nil {
 		log.Printf("Error updating student: %v", err)
-		
+
 		// Handle PostgreSQL constraint violations
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code {
@@ -156,7 +156,7 @@ func (h *StudentHandler) UpdateStudent(c *gin.Context) {
 				return
 			}
 		}
-		
+
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update student"})
 		return
 	}
@@ -202,7 +202,7 @@ func (h *StudentHandler) DeleteStudent(c *gin.Context) {
 // HealthCheck handles GET requests to check API health
 func (h *StudentHandler) HealthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"status": "ok",
+		"status":  "ok",
 		"message": "API is running",
 	})
 }

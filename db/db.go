@@ -27,12 +27,12 @@ func InitDB(cfg *config.Config) (*sql.DB, error) {
 // CreateDBIfNotExists creates the database if it doesn't exist
 func CreateDBIfNotExists(cfg *config.Config) error {
 	log.Printf("Connecting to PostgreSQL to create database '%s'...", cfg.DBName)
-	
+
 	// Connect to PostgreSQL default database
 	connStr := cfg.GetDBConnectionStringWithoutDB()
-	log.Printf("Connection string (without password): host=%s port=%s user=%s dbname=postgres sslmode=%s", 
+	log.Printf("Connection string (without password): host=%s port=%s user=%s dbname=postgres sslmode=%s",
 		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBSSLMode)
-	
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return fmt.Errorf("failed to open connection to postgres database: %w", err)
@@ -87,7 +87,7 @@ func InsertSampleData(db *sql.DB) error {
 	// Insert sample data
 	sampleData := []struct {
 		firstName, lastName, email, studentID, course string
-		yearOfStudy int
+		yearOfStudy                                   int
 	}{
 		{"John", "Doe", "john.doe@bournemouth.ac.uk", "S12345678", "Information Technology", 2},
 		{"Jane", "Smith", "jane.smith@bournemouth.ac.uk", "S87654321", "Computer Science", 3},
@@ -99,7 +99,7 @@ func InsertSampleData(db *sql.DB) error {
 			INSERT INTO students (first_name, last_name, email, student_id, course, year_of_study)
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, student.firstName, student.lastName, student.email, student.studentID, student.course, student.yearOfStudy)
-		
+
 		if err != nil {
 			log.Printf("Warning: Failed to insert sample student %s %s: %v", student.firstName, student.lastName, err)
 		} else {

@@ -23,7 +23,11 @@ func RunMigrations(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			// Log the error or handle it appropriately
+		}
+	}()
 
 	// Create migration instance
 	driver, err := postgres.WithInstance(db, &postgres.Config{})

@@ -37,7 +37,11 @@ func CreateDBIfNotExists(cfg *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to open connection to postgres database: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			// Log the error or handle it appropriately
+		}
+	}()
 
 	// Test connection
 	if err := db.Ping(); err != nil {

@@ -28,7 +28,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer database.Close()
+	defer func() {
+		if closeErr := database.Close(); closeErr != nil {
+			log.Printf("Error closing database: %v", closeErr)
+		}
+	}()
 
 	// Insert sample data if table is empty
 	if err := db.InsertSampleData(database); err != nil {

@@ -39,7 +39,7 @@ func CreateDBIfNotExists(cfg *config.Config) error {
 	}
 	defer func() {
 		if closeErr := db.Close(); closeErr != nil {
-			// Log the error or handle it appropriately
+			log.Printf("Error closing database: %v", closeErr)
 		}
 	}()
 

@@ -48,7 +48,7 @@ func (r *PostgresStudentRepository) GetAll() ([]Student, error) {
 	}
 	defer func() {
 		if closeErr := rows.Close(); closeErr != nil {
-			// Log the error or handle it appropriately
+			log.Printf("Error closing rows: %v", closeErr)
 		}
 	}()
 

@@ -8,7 +8,9 @@
 # The binary is copied from the builder stage, along with any necessary migrations.
 # The application is set to run in the root directory of the final image.
 # The Dockerfile is designed to be efficient and secure, minimizing the size of the final image.
-# The application is built with Go version 1.21 on Alpine Linux.    
+# The application is built with Go version 1.21 on Alpine Linux. 
+# The final image is based on the latest Alpine Linux version.
+# The application is expected to run on port 8080, which is exposed in the final   
 FROM golang:1.21-alpine AS builder
 
 WORKDIR /app

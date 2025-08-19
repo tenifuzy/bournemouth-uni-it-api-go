@@ -9,6 +9,11 @@ POSTGRES_CONTAINER=postgres_db
 help: ## Show this help message
 	@echo "Available commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Vagrant commands:"
+	@echo "  vagrant-up       - Start Vagrant VM"
+	@echo "  vagrant-deploy   - Deploy application in Vagrant"
+	@echo "  vagrant-status   - Check Vagrant and application status"
 
 # Local development
 build: ## Build the application locally
@@ -114,3 +119,12 @@ vagrant-status: ## Check Vagrant and application status
 	@curl -s http://localhost:8080/healthcheck || echo "Nginx not ready"
 	@curl -s http://localhost:8081/healthcheck || echo "API1 not ready"
 	@curl -s http://localhost:8082/healthcheck || echo "API2 not ready"
+
+vagrant-halt: ## Stop Vagrant VM
+	vagrant halt
+
+vagrant-ssh: ## SSH into Vagrant VM
+	vagrant ssh
+
+vagrant-destroy: ## Destroy Vagrant VM
+	vagrant destroy -f

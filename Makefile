@@ -100,16 +100,16 @@ vagrant-up: ## Start Vagrant VM
 	vagrant up
 
 vagrant-deploy: ## Deploy application in Vagrant
-	docker-compose down -v || true
-	docker-compose build
-	docker-compose up -d
+	docker compose down -v || true
+	docker compose build
+	docker compose up -d
 	@echo "Waiting for services to be ready..."
 	@sleep 30
 	@echo "Application deployed successfully!"
 
 vagrant-status: ## Check Vagrant and application status
 	vagrant status
-	docker-compose ps
+	docker compose ps
 	@echo "Testing endpoints..."
 	@curl -s http://localhost:8080/healthcheck || echo "Nginx not ready"
 	@curl -s http://localhost:8081/healthcheck || echo "API1 not ready"

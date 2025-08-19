@@ -1,0 +1,349 @@
+===============================================================================
+                    BOURNEMOUTH UNIVERSITY IT API - CODE ARCHITECTURE
+===============================================================================
+
+APPLICATION OVERVIEW
+====================
+A RESTful API for managing Bournemouth University IT students built with Go, 
+Gin framework, PostgreSQL database, and containerized deployment.
+
+CORE COMPONENTS & FILE RELATIONSHIPS
+====================================
+
+1. APPLICATION ENTRY POINT
+---------------------------
+main.go
+├── Loads environment variables (.env file)
+├── Initializes configuration (config/config.go)
+├── Establishes database connection (db/db.go)
+├── Runs database migrations (db/migrations.go)
+├── Sets up HTTP routes (router/router.go)
+└── Starts Gin web server on port 8080
+
+Flow: main.go → config → db → router → handlers
+
+2. CONFIGURATION LAYER
+-----------------------
+.env → config/config.go → All Components
+
+config/config.go:
+- Reads environment variables from .env file
+- Provides database connection strings
+- Supplies configuration to all components
+- Ensures consistent settings across application
+
+Environment Variables:
+- DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+- DB_SSL_MODE, SERVER_PORT
+
+3. DATABASE LAYER
+-----------------
+migrations/*.sql → db/migrations.go → db/db.go → models/student.go
+
+Database Components:
+- migrations/000001_create_students_table.up.sql: Creates student table
+- migrations/000001_create_students_table.down.sql: Drops student table
+- db/migrations.go: Executes migrations using golang-migrate
+- db/db.go: Manages PostgreSQL connections and database creation
+- models/student.go: Defines data structures and repository pattern
+
+Database Flow:
+1. Application starts
+2. Database connection established
+3. Migrations run automatically
+4. Repository methods use connection for CRUD operations
+
+4. BUSINESS LOGIC LAYER
+-----------------------
+models/student.go → handlers/student_handler.go → router/router.go
+
+models/student.go:
+- Student struct definition with JSON tags
+- StudentRepository interface (abstraction)
+- PostgresStudentRepository implementation
+- CRUD operations: GetAll, GetByID, Create, Update, Delete
+
+handlers/student_handler.go:
+- HTTP request/response handling
+- JSON marshaling/unmarshaling
+- Business logic validation
+- Error handling and logging
+- Calls repository methods
+
+Student Model Structure:
+{
+  "id": 1,
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@bournemouth.ac.uk",
+  "student_id": "S12345678",
+  "course": "Information Technology",
+  "year_of_study": 2,
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+
+5. HTTP LAYER
+-------------
+Client Request → middleware/logger.go → router/router.go → handlers → Response
+
+router/router.go:
+- Route definitions (/api/v1/students)
+- Middleware integration (logging, recovery)
+- Frontend file serving
+- Handler method mapping to HTTP verbs
+
+API Endpoints:
+- GET /api/v1/students - Get all students
+- GET /api/v1/students/:id - Get student by ID
+- POST /api/v1/students - Create new student
+- PUT /api/v1/students/:id - Update existing student
+- DELETE /api/v1/students/:id - Delete student
+- GET /healthcheck - Health check endpoint
+
+middleware/logger.go:
+- Request/response logging
+- Performance monitoring
+- Error tracking
+
+6. FRONTEND INTEGRATION
+-----------------------
+frontend/index.html → router/router.go → API endpoints
+
+Frontend Components:
+- HTML/CSS/JavaScript single-page application
+- AJAX calls to API endpoints
+- User interface for CRUD operations
+- Real-time form validation
+- Success/error message handling
+
+DETAILED DATA FLOW EXAMPLE: CREATING A STUDENT
+==============================================
+
+1. User fills form in frontend/index.html
+2. JavaScript sends POST request to /api/v1/students
+3. router/router.go receives request
+4. middleware/logger.go logs the request
+5. handlers/student_handler.go processes request:
+   - Validates JSON input using Gin binding
+   - Creates Student struct
+   - Calls repository.Create() method
+6. models/student.go executes database operation:
+   - Runs SQL INSERT query
+   - Returns created student with generated ID
+7. Handler returns JSON response with created student
+8. Frontend receives response and updates UI
+9. Success message displayed to user
+
+ERROR HANDLING CHAIN
+====================
+Database Error → Repository → Handler → HTTP Response → Frontend
+
+Each layer transforms errors appropriately:
+- Repository: Database-specific errors
+- Handler: HTTP status codes (400, 404, 500) and JSON error responses
+- Frontend: User-friendly error messages
+
+FILE DEPENDENCY MAP
+===================
+main.go
+├── config/config.go
+├── db/db.go
+│   ├── config/config.go
+│   └── migrations/
+├── db/migrations.go
+│   ├── config/config.go
+│   └── migrations/*.sql
+├── router/router.go
+│   ├── handlers/student_handler.go
+│   └── middleware/logger.go
+└── handlers/student_handler.go
+    └── models/student.go
+
+TESTING ARCHITECTURE
+====================
+tests/student_handler_test.go → Mock Repository → Handler Testing
+
+Testing Components:
+- MockStudentRepository: Implements StudentRepository interface
+- Unit tests for each HTTP endpoint
+- Test data and assertions
+- Isolated testing without database dependency
+- Uses testify/mock for mocking
+
+Test Coverage:+
+- GET /api/v1/students
+- GET /api/v1/students/:id
+- POST /api/v1/students
+- PUT /api/v1/students/:id
+- DELETE /api/v1/students/:id
+- GET /healthcheck
+
+CONTAINERIZATION & DEPLOYMENT
+=============================
+
+Docker Integration:
+Dockerfile → docker-compose.yml → Application + Database
+
+Dockerfile (Multi-stage build):
+1. Builder stage: golang:1.21-alpine
+   - Downloads dependencies
+   - Builds Go binary
+2. Runtime stage: alpine:latest
+   - Copies binary and migrations
+   - Exposes port 8080
+   - Runs application
+
+docker-compose.yml:
+- PostgreSQL service (postgres:15-alpine)
+- API service (built from Dockerfile)
+- Network configuration (app-network)
+- Volume management (postgres_data)
+- Health checks and dependencies
+
+CI/CD PIPELINE
+==============
+.github/workflows/ci.yml → Makefile → Build/Test/Deploy
+
+Pipeline Stages:
+1. Checkout code
+2. Set up Go environment
+3. Install dependencies (make deps)
+4. Build API (make build)
+5. Run tests (make test)
+6. Code linting (make lint)
+7. Docker login
+8. Build and push Docker images
+
+Triggers:
+- Push to main branch (code files only)
+- Pull requests
+- Manual workflow dispatch
+
+Self-hosted Runner:
+- Runs on AWS EC2 or local machine
+- Requires Docker, Go, Make installed
+- Uses GitHub secrets for Docker credentials
+
+DEVELOPMENT TOOLS
+=================
+
+Makefile Targets:
+- make docker-up: Start entire application stack
+- make docker-down: Stop all services
+- make test: Run unit tests
+- make build: Build Go binary
+- make lint: Code quality checks
+- make ci-local: Run CI pipeline locally
+
+Development Workflow:
+Code Changes → make test → make docker-up → Browser Testing
+
+Project Structure:
+bournemouth-uni-it-api-go/
+├── config/           # Configuration management
+├── db/              # Database connection and migrations
+├── handlers/        # HTTP request handlers
+├── middleware/      # Custom middleware
+├── migrations/      # Database migration files
+├── models/          # Data models and repository interfaces
+├── router/          # Route definitions
+├── tests/           # Unit tests
+├── frontend/        # Web interface
+├── .github/         # CI/CD workflows
+├── .env             # Environment variables
+├── go.mod           # Go module dependencies
+├── main.go          # Application entry point
+├── Dockerfile       # Container definition
+├── docker-compose.yml # Service orchestration
+└── Makefile         # Build automation
+
+ARCHITECTURE PRINCIPLES
+=======================
+
+1. Separation of Concerns
+   - Each package has single responsibility
+   - Clear boundaries between layers
+
+2. Dependency Injection
+   - Configuration injected into components
+   - Database connections passed to repositories
+
+3. Repository Pattern
+   - Data access abstracted from business logic
+   - Interface-based design for testability
+
+4. Middleware Pattern
+   - Cross-cutting concerns handled separately
+   - Logging, recovery, CORS support
+
+5. RESTful Design
+   - HTTP verbs mapped to CRUD operations
+   - Consistent API structure
+
+6. Clean Architecture
+   - Dependencies point inward
+   - Business logic independent of frameworks
+
+SCALABILITY FEATURES
+====================
+
+- Containerized deployment for horizontal scaling
+- Database migrations for schema evolution
+- Environment-based configuration for multiple environments
+- Comprehensive testing for reliable deployments
+- CI/CD pipeline for automated quality assurance
+- Self-hosted runners for custom deployment environments
+
+SECURITY CONSIDERATIONS
+=======================
+
+- Environment variables for sensitive data
+- Database connection pooling
+- Input validation and sanitization
+- Error handling without information leakage
+- Docker security best practices
+- Secrets management in CI/CD
+
+PERFORMANCE OPTIMIZATIONS
+=========================
+
+- Multi-stage Docker builds for smaller images
+- Database connection reuse
+- Efficient SQL queries
+- Minimal dependencies
+- Alpine Linux base images
+- Static file serving optimization
+
+MONITORING & LOGGING
+====================
+
+- Request/response logging middleware
+- Health check endpoint for monitoring
+- Docker container logs
+- CI pipeline status tracking
+- Error tracking and reporting
+
+===============================================================================
+                                   SUMMARY
+===============================================================================
+
+The Bournemouth University IT API is a well-architected Go application that 
+follows clean architecture principles with clear separation of concerns. The 
+application uses a layered approach with configuration, database, business 
+logic, and HTTP layers working together seamlessly.
+
+Key strengths:
+- Modular design with clear interfaces
+- Comprehensive testing strategy
+- Containerized deployment
+- Automated CI/CD pipeline
+- Environment-based configuration
+- RESTful API design
+- Frontend integration
+
+The architecture ensures maintainability, testability, and scalability while 
+following Go best practices and industry standards for web application 
+development.
+
+===============================================================================

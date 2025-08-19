@@ -1,4 +1,4 @@
-.PHONY: help build run test clean docker-build docker-up docker-down docker-logs db-start db-migrate fmt deps lint ci-local
+.PHONY: help build run test clean docker-build docker-up docker-down docker-logs db-start db-migrate fmt deps lint ci-local vagrant-up vagrant-deploy vagrant-status
 
 # Variables
 APP_NAME=student_api
@@ -94,3 +94,23 @@ ci-local: ## Run CI pipeline locally
 	else \
 		chmod +x run-ci.sh && ./run-ci.sh; \
 	fi
+
+# Vagrant targets
+vagrant-up: ## Start Vagrant VM
+	vagrant up
+
+vagrant-deploy: ## Deploy application in Vagrant
+	docker-compose down -v || true
+	docker-compose build
+	docker-compose up -d
+	@echo "Waiting for services to be ready..."
+	@sleep 30
+	@echo "Application deployed successfully!"
+
+vagrant-status: ## Check Vagrant and application status
+	vagrant status
+	docker-compose ps
+	@echo "Testing endpoints..."
+	@curl -s http://localhost:8080/healthcheck || echo "Nginx not ready"
+	@curl -s http://localhost:8081/healthcheck || echo "API1 not ready"
+	@curl -s http://localhost:8082/healthcheck || echo "API2 not ready"

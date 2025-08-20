@@ -6,21 +6,27 @@ on:
       - '**.go'
       - 'go.mod'
       - 'go.sum'
-      - 'Makefile'
       - 'Dockerfile'
-      - 'docker-compose.yml'
       - 'migrations/**'
       - 'frontend/**'
+    paths-ignore:
+      - 'Makefile'
+      - 'docker-compose.yml'
+      - '**.md'
+      - '.env*'
   pull_request:
     paths:
       - '**.go'
       - 'go.mod'
       - 'go.sum'
-      - 'Makefile'
       - 'Dockerfile'
-      - 'docker-compose.yml'
       - 'migrations/**'
       - 'frontend/**'
+    paths-ignore:
+      - 'Makefile'
+      - 'docker-compose.yml'
+      - '**.md'
+      - '.env*'
   workflow_dispatch:
 
 env:

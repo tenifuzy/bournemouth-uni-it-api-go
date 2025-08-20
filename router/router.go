@@ -90,7 +90,7 @@ func getIndexHTML() string {
 <body>
     <div class="header">
         <h1>Bournemouth University IT Students Management</h1>
-        <p>Student Information System</p>
+        <p>Student Information System - Load Balanced</p>
     </div>
     <div class="container">
         <div id="message"></div>
@@ -158,7 +158,9 @@ func getIndexHTML() string {
     <script>
         const API_BASE = '/api/v1';
         let editingId = null;
+        
         document.addEventListener('DOMContentLoaded', loadStudents);
+        
         document.getElementById('studentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const student = {
@@ -169,21 +171,23 @@ func getIndexHTML() string {
                 course: document.getElementById('course').value,
                 year_of_study: parseInt(document.getElementById('yearOfStudy').value)
             };
+            
             try {
                 let response;
                 if (editingId) {
-                    response = await fetch(\`\${API_BASE}/students/\${editingId}\`, {
+                    response = await fetch(API_BASE + '/students/' + editingId, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(student)
                     });
                 } else {
-                    response = await fetch(\`\${API_BASE}/students\`, {
+                    response = await fetch(API_BASE + '/students', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(student)
                     });
                 }
+                
                 if (response.ok) {
                     showMessage(editingId ? 'Student updated successfully!' : 'Student added successfully!', 'success');
                     resetForm();
@@ -196,9 +200,10 @@ func getIndexHTML() string {
                 showMessage('Network error: ' + error.message, 'error');
             }
         });
+        
         async function loadStudents() {
             try {
-                const response = await fetch(\`\${API_BASE}/students\`);
+                const response = await fetch(API_BASE + '/students');
                 if (response.ok) {
                     const students = await response.json();
                     displayStudents(students || []);
@@ -209,28 +214,28 @@ func getIndexHTML() string {
                 showMessage('Network error: ' + error.message, 'error');
             }
         }
+        
         function displayStudents(students) {
             const tbody = document.getElementById('studentsBody');
             tbody.innerHTML = '';
             students.forEach(student => {
                 const row = tbody.insertRow();
-                row.innerHTML = \`
-                    <td>\${student.id}</td>
-                    <td>\${student.first_name} \${student.last_name}</td>
-                    <td>\${student.email}</td>
-                    <td>\${student.student_id}</td>
-                    <td>\${student.course}</td>
-                    <td>Year \${student.year_of_study}</td>
-                    <td class="actions">
-                        <button onclick="editStudent(\${student.id})">Edit</button>
-                        <button class="btn-danger" onclick="deleteStudent(\${student.id})">Delete</button>
-                    </td>
-                \`;
+                row.innerHTML = '<td>' + student.id + '</td>' +
+                    '<td>' + student.first_name + ' ' + student.last_name + '</td>' +
+                    '<td>' + student.email + '</td>' +
+                    '<td>' + student.student_id + '</td>' +
+                    '<td>' + student.course + '</td>' +
+                    '<td>Year ' + student.year_of_study + '</td>' +
+                    '<td class="actions">' +
+                        '<button onclick="editStudent(' + student.id + ')">Edit</button>' +
+                        '<button class="btn-danger" onclick="deleteStudent(' + student.id + ')">Delete</button>' +
+                    '</td>';
             });
         }
+        
         async function editStudent(id) {
             try {
-                const response = await fetch(\`\${API_BASE}/students/\${id}\`);
+                const response = await fetch(API_BASE + '/students/' + id);
                 if (response.ok) {
                     const student = await response.json();
                     document.getElementById('studentId').value = student.id;
@@ -250,10 +255,11 @@ func getIndexHTML() string {
                 showMessage('Network error: ' + error.message, 'error');
             }
         }
+        
         async function deleteStudent(id) {
             if (!confirm('Are you sure you want to delete this student?')) return;
             try {
-                const response = await fetch(\`\${API_BASE}/students/\${id}\`, {
+                const response = await fetch(API_BASE + '/students/' + id, {
                     method: 'DELETE'
                 });
                 if (response.ok) {
@@ -267,6 +273,7 @@ func getIndexHTML() string {
                 showMessage('Network error: ' + error.message, 'error');
             }
         }
+        
         function resetForm() {
             document.getElementById('studentForm').reset();
             document.getElementById('studentId').value = '';
@@ -275,12 +282,13 @@ func getIndexHTML() string {
             document.getElementById('submitBtn').textContent = 'Add Student';
             document.getElementById('cancelBtn').style.display = 'none';
         }
+        
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = \`<div class="message \${type}">\${text}</div>\`;
-            setTimeout(() => messageDiv.innerHTML = '', 5000);
+            messageDiv.innerHTML = '<div class="message ' + type + '">' + text + '</div>';
+            setTimeout(function() { messageDiv.innerHTML = ''; }, 5000);
         }
     </script>
 </body>
-</html>\`
+</html>`
 }

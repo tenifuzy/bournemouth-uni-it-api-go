@@ -96,6 +96,22 @@ up: docker-up ## Alias for docker-up
 down: docker-down ## Alias for docker-down
 logs: docker-logs ## Alias for docker-logs
 
+# Vagrant commands
+vagrant-build: ## Build Docker image for Vagrant
+	docker build -t tenifuzy01/v1:latest .
+
+vagrant-deploy: ## Deploy application in Vagrant
+	docker-compose -f docker-compose.vagrant.yml down || true
+	docker-compose -f docker-compose.vagrant.yml build
+	docker-compose -f docker-compose.vagrant.yml up -d
+	@echo "Application deployed! Access at http://localhost:8080"
+
+vagrant-logs: ## View Vagrant deployment logs
+	docker-compose -f docker-compose.vagrant.yml logs -f
+
+vagrant-stop: ## Stop Vagrant deployment
+	docker-compose -f docker-compose.vagrant.yml down
+
 ci-local: ## Run CI pipeline locally
 	@if [ "$$OS" = "Windows_NT" ]; then \
 		.\run-ci.bat; \

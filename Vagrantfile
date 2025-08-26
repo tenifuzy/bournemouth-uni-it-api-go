@@ -1,3 +1,5 @@
+# Vagrantfile for setting up a development environment for the student API server
+# This configuration uses Ubuntu 24.04 LTS and sets up port forwarding for the application.
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/jammy64"  # Ubuntu 24.04 LTS
   config.vm.hostname = "student-api-server"

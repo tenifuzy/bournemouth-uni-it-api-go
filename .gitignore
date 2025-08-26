@@ -19,6 +19,14 @@ vendor/
 # Environment variables
 .env
 .env.local
+.env.docker
+
+# Vagrant
+.vagrant/
+
+# Build artifacts
+main
+*.exe
 
 # IDE specific files
 .idea/

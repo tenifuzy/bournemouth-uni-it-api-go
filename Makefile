@@ -101,7 +101,10 @@ vagrant-build: ## Build Docker image for Vagrant
 	docker build -t tenifuzy01/v1:latest .
 
 vagrant-deploy: ## Deploy application in Vagrant
-	docker-compose -f docker-compose.vagrant.yml down || true
+	docker ps -a --filter "name=postgres_db" -q | xargs docker rm -f 2>/dev/null || true
+	docker ps -a --filter "name=student_api" -q | xargs docker rm -f 2>/dev/null || true
+	docker ps -a --filter "name=nginx_lb" -q | xargs docker rm -f 2>/dev/null || true
+	docker-compose -f docker-compose.vagrant.yml down -v || true
 	docker-compose -f docker-compose.vagrant.yml build
 	docker-compose -f docker-compose.vagrant.yml up -d
 	@echo "Application deployed! Access at http://localhost:8080"
@@ -123,10 +126,12 @@ ci-local: ## Run CI pipeline locally
 vagrant-up: ## Start Vagrant VM
 	vagrant up
 
-vagrant-deploy: ## Deploy application in Vagrant
-	docker compose down -v || true
-	docker compose build
-	docker compose up -d
+vagrant-deploy-vm: ## Deploy application in Vagrant VM
+	docker stop postgres_db student_api_1 student_api_2 nginx_lb 2>/dev/null || true
+	docker rm postgres_db student_api_1 student_api_2 nginx_lb 2>/dev/null || true
+	docker-compose -f docker-compose.vagrant.yml down -v || true
+	docker-compose -f docker-compose.vagrant.yml build
+	docker-compose -f docker-compose.vagrant.yml up -d
 	@echo "Waiting for services to be ready..."
 	@sleep 30
 	@echo "Application deployed successfully!"

@@ -11,9 +11,11 @@ Vagrant.configure("2") do |config|
   
   # VM configuration
   config.vm.provider "virtualbox" do |vb|
-    vb.name = "bournemouth-student-api"
+    vb.name = "bournemouth-students-api"
     vb.memory = "2048"
     vb.cpus = 2
+    vb.gui = false
+    config.vm.boot_timeout = 600  # Increase timeout to 10 minutes
   end
   
   # Sync project folder

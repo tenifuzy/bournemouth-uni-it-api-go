@@ -28,12 +28,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 # Final stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+RUN apk --no-cache add ca-certificates netcat-openbsd
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/frontend ./frontend
 
 # Expose port
 EXPOSE 8080

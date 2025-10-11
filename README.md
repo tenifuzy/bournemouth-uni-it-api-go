@@ -15,6 +15,7 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - ✅ **Load balancing** with Nginx
 - ✅ **Containerized deployment**
 - ✅ **Vagrant virtualization**
+- ✅ **Kubernetes deployment** with Vault & ESO
 - ✅ **CI/CD pipeline** with GitHub Actions
 
 ## 📋 Prerequisites
@@ -33,6 +34,12 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - **VirtualBox** 6.1+ installed
 - At least **4GB RAM** available for the VM
 
+### For Kubernetes Deployment
+- **Kubernetes cluster** (v1.20+) with kubectl configured
+- **Helm** (v3.0+) for External Secrets Operator
+- **Persistent Volume** support
+- **LoadBalancer** or **Ingress Controller** support
+
 ## 🏗️ Architecture
 
 ### Standard Deployment
@@ -45,6 +52,13 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - **1 PostgreSQL container** with persistent data
 - **1 Nginx load balancer** on port 8080
 - **Ubuntu 24.04 VM** with 2GB RAM, 2 CPUs
+
+### Kubernetes Deployment (Production Ready)
+- **2 API replicas** with auto-scaling capability
+- **PostgreSQL** with persistent storage
+- **HashiCorp Vault** for secret management
+- **External Secrets Operator** for secret synchronization
+- **Ingress** and **LoadBalancer** for external access
 
 ## 🚀 Quick Start Guide
 
@@ -154,7 +168,60 @@ vagrant destroy
 - **Direct API 1**: http://localhost:8081
 - **Direct API 2**: http://localhost:8082
 
-### Option 3: Local Development
+### Option 3: Kubernetes Deployment (Production Ready)
+
+#### Prerequisites Check
+```bash
+# Verify installations
+kubectl version --client
+helm version
+```
+
+#### Deploy to Kubernetes
+```bash
+# Clone repository
+git clone https://github.com/tenifuzy/bournemouth-uni-it-api-go.git
+cd bournemouth-uni-it-api-go
+
+# Deploy everything (Linux/Mac)
+chmod +x k8s/deploy-all.sh
+./k8s/deploy-all.sh
+
+# Deploy everything (Windows)
+k8s\deploy-all.bat
+```
+
+#### Kubernetes Management
+```bash
+# Check deployment status
+kubectl get all -n student-api
+
+# View logs
+kubectl logs -l app=student-api -n student-api
+
+# Port forward for local access
+kubectl port-forward svc/student-api-service 8080:8080 -n student-api
+
+# Scale application
+kubectl scale deployment student-api --replicas=3 -n student-api
+
+# Clean up
+kubectl delete namespace student-api
+```
+
+**Access Points:**
+- **LoadBalancer**: `kubectl get svc student-api-loadbalancer -n student-api`
+- **Port Forward**: http://localhost:8080 (after port-forward command)
+- **Ingress**: Configure DNS for `student-api.local`
+
+**Key Features:**
+- 🔐 **HashiCorp Vault** for secure secret storage
+- 🔄 **External Secrets Operator** for automatic secret sync
+- 🚀 **Init containers** for database migrations
+- 📊 **Health checks** and **resource limits**
+- 🌐 **Multiple access methods** (LoadBalancer, Ingress)
+
+### Option 4: Local Development
 
 #### 1. Environment Setup
 ```bash
@@ -355,6 +422,25 @@ make vagrant-halt     # Stop Vagrant VM
 make vagrant-destroy  # Destroy Vagrant VM
 ```
 
+#### Kubernetes Operations
+```bash
+# Deploy to Kubernetes
+./k8s/deploy-all.sh   # Linux/Mac
+k8s\deploy-all.bat    # Windows
+
+# Check status
+kubectl get all -n student-api
+
+# View logs
+kubectl logs -l app=student-api -n student-api
+
+# Port forward
+kubectl port-forward svc/student-api-service 8080:8080 -n student-api
+
+# Clean up
+kubectl delete namespace student-api
+```
+
 #### Development
 ```bash
 make build          # Build application locally
@@ -379,6 +465,15 @@ bournemouth-uni-it-api-go/
 ├── postman/              # Postman collection for API testing
 ├── router/               # Route definitions
 ├── tests/                # Unit tests
+├── k8s/                  # Kubernetes deployment manifests
+│   ├── namespaces/       # Namespace configuration
+│   ├── app/              # Application deployment
+│   ├── db/               # Database deployment
+│   ├── vault/            # HashiCorp Vault
+│   ├── eso/              # External Secrets Operator
+│   ├── configmaps/       # Configuration maps
+│   ├── secrets/          # Secret references
+│   └── ingress/          # Ingress configuration
 ├── vagrant/              # Vagrant provisioning scripts
 ├── docker-compose.yml    # Standard Docker Compose
 ├── docker-compose.vagrant.yml  # Vagrant Docker Compose
@@ -457,6 +552,35 @@ vagrant ssh -c "docker ps"
 vagrant ssh -c "cd /vagrant && make vagrant-deploy"
 ```
 
+### Kubernetes Issues
+
+**Pods Not Starting:**
+```bash
+# Check pod status
+kubectl describe pod <pod-name> -n student-api
+
+# Check events
+kubectl get events -n student-api --sort-by=.metadata.creationTimestamp
+```
+
+**Secret Not Created:**
+```bash
+# Check External Secrets Operator
+kubectl logs -l app.kubernetes.io/name=external-secrets -n external-secrets-system
+
+# Check External Secret status
+kubectl describe externalsecret db-credentials -n student-api
+```
+
+**Database Migration Issues:**
+```bash
+# Check init container logs
+kubectl logs -l app=student-api -c migration -n student-api
+
+# Run migration manually
+kubectl exec -it deployment/student-api -n student-api -- /app/main migrate
+```
+
 ### General Issues
 
 **Build Failures:**
@@ -474,6 +598,7 @@ make deps
 # Make scripts executable
 chmod +x *.sh
 chmod +x vagrant/*.sh
+chmod +x k8s/*.sh
 ```
 
 ## 🚀 CI/CD Pipeline
@@ -546,28 +671,42 @@ For support or questions:
 
 ### Essential Commands
 ```bash
-# Standard deployment
+# Docker deployment
 make docker-up
 
 # Vagrant deployment
 vagrant up
 
+# Kubernetes deployment
+./k8s/deploy-all.sh     # Linux/Mac
+k8s\deploy-all.bat      # Windows
+
 # View logs
-make docker-logs        # Standard
-make vagrant-logs       # Vagrant
+make docker-logs                              # Docker
+make vagrant-logs                             # Vagrant
+kubectl logs -l app=student-api -n student-api # Kubernetes
 
 # Stop services
-make docker-down        # Standard
-vagrant halt           # Vagrant
+make docker-down                              # Docker
+vagrant halt                                  # Vagrant
+kubectl delete namespace student-api          # Kubernetes
 
 # Access database
-docker exec -it postgres_db psql -U postgres -d student_db
+docker exec -it postgres_db psql -U postgres -d student_db                    # Docker/Vagrant
+kubectl exec -it deployment/postgres-db -n student-api -- psql -U postgres -d student_db # Kubernetes
 ```
 
 ### Access URLs
-- **Standard**: http://localhost:8080
+- **Docker**: http://localhost:8080
 - **Vagrant Load Balanced**: http://localhost:8080
 - **Vagrant API 1**: http://localhost:8081
 - **Vagrant API 2**: http://localhost:8082
+- **Kubernetes (Port Forward)**: http://localhost:8080 (after `kubectl port-forward`)
+- **Kubernetes (LoadBalancer)**: Check `kubectl get svc -n student-api`
 - **Health Check**: http://localhost:8080/healthcheck
 - **API Endpoints**: http://localhost:8080/api/v1/students
+
+### Kubernetes Specific
+- **Comprehensive Guide**: [k8s/README-K8S.md](k8s/README-K8S.md)
+- **Directory Structure**: [k8s/STRUCTURE.md](k8s/STRUCTURE.md)
+- **Deployment Scripts**: `k8s/deploy-all.sh` (Linux/Mac) or `k8s/deploy-all.bat` (Windows)

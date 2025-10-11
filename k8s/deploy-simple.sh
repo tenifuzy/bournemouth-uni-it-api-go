@@ -2,8 +2,8 @@
 
 set -e
 
-echo "🚀 Deploying Bournemouth University IT Student API to Kubernetes"
-echo "================================================================"
+echo "🚀 Deploying Bournemouth University IT Student API to Kubernetes (Simplified)"
+echo "============================================================================="
 
 # Function to wait for deployment
 wait_for_deployment() {
@@ -76,19 +76,7 @@ echo ""
 echo "# Get Students:"
 echo "curl http://localhost:8080/api/v1/students"
 echo ""
-echo "# Create Student:"
-echo 'curl -X POST http://localhost:8080/api/v1/students \'
-echo '  -H "Content-Type: application/json" \'
-echo '  -d '"'"'{'
-echo '    "first_name": "John",'
-echo '    "last_name": "Doe",'
-echo '    "email": "john.doe@bournemouth.ac.uk",'
-echo '    "student_id": "S12345678",'
-echo '    "course": "Information Technology",'
-echo '    "year_of_study": 2'
-echo '  }'"'"
 
-echo ""
 echo "🔍 Useful Commands:"
 echo "=================="
 echo "# Check pods:"
@@ -99,6 +87,3 @@ echo "kubectl logs -l app=student-api -n student-api"
 echo ""
 echo "# Check migration logs:"
 echo "kubectl logs -l app=student-api -c migration -n student-api"
-echo ""
-echo "# Access database:"
-echo "kubectl exec -it deployment/postgres-db -n student-api -- psql -U postgres -d student_db"

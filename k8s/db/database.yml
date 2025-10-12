@@ -25,6 +25,8 @@ spec:
         app: postgres-db
         tier: database
     spec:
+      nodeSelector:
+        type: database
       containers:
       - name: postgres
         image: postgres:15-alpine

@@ -17,6 +17,8 @@ spec:
         app: student-api
         tier: application
     spec:
+      nodeSelector:
+        type: application
       initContainers:
       - name: migration
         image: tenifuzy01/v1:latest

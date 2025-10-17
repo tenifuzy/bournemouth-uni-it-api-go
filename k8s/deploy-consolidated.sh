@@ -7,6 +7,10 @@ echo "🔐 Deploying HashiCorp Vault..."
 kubectl apply -f vault.yml
 kubectl wait --for=condition=ready pod -l app=vault -n vault-system --timeout=300s
 
+# Install External Secrets Operator CRDs
+echo "📦 Installing External Secrets Operator CRDs..."
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/deploy/crds/bundle.yaml
+
 # Deploy External Secrets Operator
 echo "🔄 Deploying External Secrets Operator..."
 kubectl apply -f eso.yml

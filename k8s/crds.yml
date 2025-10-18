@@ -29,6 +29,17 @@ metadata:
 spec:
   group: external-secrets.io
   versions:
+  - name: v1
+    served: true
+    storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+          status:
+            type: object
   - name: v1beta1
     served: true
     storage: true

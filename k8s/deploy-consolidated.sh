@@ -9,13 +9,12 @@ kubectl wait --for=condition=ready pod -l app=vault -n vault-system --timeout=30
 
 # Install External Secrets Operator CRDs
 echo "📦 Installing External Secrets Operator CRDs..."
-kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/main/deploy/crds/bundle.yaml
+kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/v0.9.11/deploy/crds/bundle.yaml
 
 # Wait for CRDs to be established
 echo "⏳ Waiting for CRDs to be established..."
-sleep 15
-kubectl wait --for condition=established --timeout=60s crd/secretstores.external-secrets.io
-kubectl wait --for condition=established --timeout=60s crd/externalsecrets.external-secrets.io
+kubectl wait --for=condition=established --timeout=300s crd/secretstores.external-secrets.io
+kubectl wait --for=condition=established --timeout=300s crd/externalsecrets.external-secrets.io
 
 # Deploy External Secrets Operator
 echo "🔄 Deploying External Secrets Operator..."

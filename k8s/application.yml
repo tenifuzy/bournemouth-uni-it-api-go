@@ -42,7 +42,7 @@ spec:
         type: application
       initContainers:
       - name: migration
-        image: bournemouth-uni-it-api-go-api1:latest
+        image: tenifuzy01/v1:latest
         imagePullPolicy: Never
         envFrom:
         - configMapRef:
@@ -71,7 +71,7 @@ spec:
             cpu: "100m"
       containers:
       - name: student-api
-        image: bournemouth-uni-it-api-go-api1:latest
+        image: tenifuzy01/v1:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 8080

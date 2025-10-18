@@ -7,6 +7,17 @@ echo "🔐 Deploying HashiCorp Vault..."
 kubectl apply -f vault.yml
 kubectl wait --for=condition=ready pod -l app=vault -n vault-system --timeout=300s
 
+# Install ESO using Helm
+echo "📦 Installing External Secrets Operator..."
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+helm install external-secrets external-secrets/external-secrets -n external-secrets-system --create-namespace
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=external-secrets -n external-secrets-system --timeout=300s
+
+# Wait for secrets sync
+echo "⏳ Waiting for secrets to sync..."
+sleep 30
+
 # Apply database components
 echo "📊 Deploying database components..."
 kubectl apply -f database.yml

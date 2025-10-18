@@ -59,3 +59,10 @@ coverage/
 # Build artifacts
 dist/
 build/
+# Ignore runner and temp files
+actions-runner/
+logs/
+tmp/
+__pycache__/
+*.log
+*.pid

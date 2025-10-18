@@ -9,7 +9,7 @@ kubectl wait --for=condition=ready pod -l app=vault -n vault-system --timeout=30
 
 # Install External Secrets Operator CRDs
 echo "📦 Installing External Secrets Operator CRDs..."
-kubectl apply -f crds.yml
+kubectl apply -f k8s/crds.yml
 
 # Wait for CRDs to be established
 echo "⏳ Waiting for CRDs to be established..."

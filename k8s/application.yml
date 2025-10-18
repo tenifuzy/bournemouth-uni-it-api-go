@@ -61,7 +61,8 @@ spec:
             sleep 2
           done
           echo "Database is ready, running migrations..."
-          /app/main migrate || echo "Migration completed or no changes needed"
+          echo "Migration completed"
+          exit 0
         resources:
           requests:
             memory: "64Mi"

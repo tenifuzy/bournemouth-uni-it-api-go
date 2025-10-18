@@ -6,50 +6,12 @@ metadata:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vault-token
+  name: db-secret
   namespace: student-api
 type: Opaque
 data:
-  token: cm9vdA== # base64 encoded "root"
----
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: vault-backend
-  namespace: student-api
-spec:
-  provider:
-    vault:
-      server: "http://vault-service.vault-system.svc.cluster.local:8200"
-      path: "secret"
-      version: "v2"
-      auth:
-        tokenSecretRef:
-          name: "vault-token"
-          key: "token"
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: db-credentials
-  namespace: student-api
-spec:
-  refreshInterval: 30s
-  secretStoreRef:
-    name: vault-backend
-    kind: SecretStore
-  target:
-    name: db-secret
-    creationPolicy: Owner
-  data:
-  - secretKey: DB_USER
-    remoteRef:
-      key: database
-      property: username
-  - secretKey: DB_PASSWORD
-    remoteRef:
-      key: database
-      property: password
+  DB_USER: cG9zdGdyZXM= # postgres
+  DB_PASSWORD: cG9zdGdyZXM= # postgres
 ---
 apiVersion: v1
 kind: ConfigMap

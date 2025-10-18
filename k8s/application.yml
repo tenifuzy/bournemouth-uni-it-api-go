@@ -1,46 +1,11 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: vault-token
+  name: app-secret
   namespace: student-api
 type: Opaque
 data:
-  token: cm9vdA== # base64 encoded "root"
----
-apiVersion: external-secrets.io/v1beta1
-kind: SecretStore
-metadata:
-  name: vault-backend
-  namespace: student-api
-spec:
-  provider:
-    vault:
-      server: "http://vault-service.vault-system.svc.cluster.local:8200"
-      path: "secret"
-      version: "v2"
-      auth:
-        tokenSecretRef:
-          name: "vault-token"
-          key: "token"
----
-apiVersion: external-secrets.io/v1beta1
-kind: ExternalSecret
-metadata:
-  name: app-credentials
-  namespace: student-api
-spec:
-  refreshInterval: 30s
-  secretStoreRef:
-    name: vault-backend
-    kind: SecretStore
-  target:
-    name: app-secret
-    creationPolicy: Owner
-  data:
-  - secretKey: API_KEY
-    remoteRef:
-      key: application
-      property: api_key
+  API_KEY: dGVzdC1rZXk= # test-key
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -77,7 +42,8 @@ spec:
         type: application
       initContainers:
       - name: migration
-        image: tenifuzy01/v1:latest
+        image: bournemouth-uni-it-api-go-api1:latest
+        imagePullPolicy: Never
         envFrom:
         - configMapRef:
             name: app-config
@@ -105,7 +71,8 @@ spec:
             cpu: "100m"
       containers:
       - name: student-api
-        image: tenifuzy01/v1:latest
+        image: bournemouth-uni-it-api-go-api1:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         envFrom:

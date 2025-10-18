@@ -14,8 +14,15 @@ spec:
         properties:
           spec:
             type: object
+            properties:
+              provider:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+            x-kubernetes-preserve-unknown-fields: true
           status:
             type: object
+            x-kubernetes-preserve-unknown-fields: true
+        x-kubernetes-preserve-unknown-fields: true
   scope: Namespaced
   names:
     plural: secretstores
@@ -29,17 +36,6 @@ metadata:
 spec:
   group: external-secrets.io
   versions:
-  - name: v1
-    served: true
-    storage: false
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-          status:
-            type: object
   - name: v1beta1
     served: true
     storage: true
@@ -49,8 +45,25 @@ spec:
         properties:
           spec:
             type: object
+            properties:
+              refreshInterval:
+                type: string
+              secretStoreRef:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              target:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              data:
+                type: array
+                items:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+            x-kubernetes-preserve-unknown-fields: true
           status:
             type: object
+            x-kubernetes-preserve-unknown-fields: true
+        x-kubernetes-preserve-unknown-fields: true
   scope: Namespaced
   names:
     plural: externalsecrets

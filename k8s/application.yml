@@ -43,7 +43,6 @@ spec:
       initContainers:
       - name: migration
         image: tenifuzy01/v1:latest
-        imagePullPolicy: Never
         envFrom:
         - configMapRef:
             name: app-config
@@ -73,7 +72,6 @@ spec:
       containers:
       - name: student-api
         image: tenifuzy01/v1:latest
-        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         envFrom:

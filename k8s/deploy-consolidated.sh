@@ -7,24 +7,6 @@ echo "🔐 Deploying HashiCorp Vault..."
 kubectl apply -f vault.yml
 kubectl wait --for=condition=ready pod -l app=vault -n vault-system --timeout=300s
 
-# Install External Secrets Operator CRDs
-echo "📦 Installing External Secrets Operator CRDs..."
-kubectl apply -f https://raw.githubusercontent.com/external-secrets/external-secrets/v0.9.11/deploy/crds/bundle.yaml
-
-# Wait for CRDs to be established
-echo "⏳ Waiting for CRDs to be established..."
-kubectl wait --for=condition=established --timeout=300s crd/secretstores.external-secrets.io
-kubectl wait --for=condition=established --timeout=300s crd/externalsecrets.external-secrets.io
-
-# Deploy External Secrets Operator
-echo "🔄 Deploying External Secrets Operator..."
-kubectl apply -f eso.yml
-kubectl wait --for=condition=ready pod -l app=external-secrets-operator -n external-secrets-system --timeout=300s
-
-# Wait for secrets to be created
-echo "⏳ Waiting for secrets to be synced..."
-sleep 30
-
 # Apply database components
 echo "📊 Deploying database components..."
 kubectl apply -f database.yml

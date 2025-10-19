@@ -6,7 +6,7 @@ echo ====================================================================
 
 REM Step 1: Deploy External Secrets Operator
 echo 🔌 Deploying External Secrets Operator...
-helm install external-secrets ./helm/external-secrets --create-namespace --wait --timeout=300s
+helm install external-secrets ./external-secrets --create-namespace --wait --timeout=300s
 if errorlevel 1 (
     echo ❌ Failed to deploy External Secrets Operator
     exit /b 1
@@ -14,7 +14,7 @@ if errorlevel 1 (
 
 REM Step 2: Deploy Vault
 echo 🔐 Deploying HashiCorp Vault...
-helm install vault ./helm/vault --namespace student-api --create-namespace --wait --timeout=300s
+helm install vault ./vault --namespace student-api --create-namespace --wait --timeout=300s
 if errorlevel 1 (
     echo ❌ Failed to deploy Vault
     exit /b 1
@@ -22,7 +22,7 @@ if errorlevel 1 (
 
 REM Step 3: Deploy PostgreSQL
 echo 🗄️  Deploying PostgreSQL database...
-helm install postgresql ./helm/postgresql --namespace student-api --wait --timeout=300s
+helm install postgresql ./postgresql --namespace student-api --wait --timeout=300s
 if errorlevel 1 (
     echo ❌ Failed to deploy PostgreSQL
     exit /b 1
@@ -30,7 +30,7 @@ if errorlevel 1 (
 
 REM Step 4: Deploy Student API
 echo 🚀 Deploying Student API application...
-helm install student-api ./helm/student-api --namespace student-api --wait --timeout=300s
+helm install student-api ./student-api --namespace student-api --wait --timeout=300s
 if errorlevel 1 (
     echo ❌ Failed to deploy Student API
     exit /b 1

@@ -23,14 +23,14 @@ wait_for_job() {
 
 # Step 1: Deploy External Secrets Operator
 echo "🔌 Deploying External Secrets Operator..."
-helm install external-secrets ./helm/external-secrets \
+helm install external-secrets ./external-secrets \
   --create-namespace \
   --wait --timeout=300s
 wait_for_deployment "external-secrets" "external-secrets-system"
 
 # Step 2: Deploy Vault
 echo "🔐 Deploying HashiCorp Vault..."
-helm install vault ./helm/vault \
+helm install vault ./vault \
   --namespace student-api \
   --create-namespace \
   --wait --timeout=300s
@@ -42,7 +42,7 @@ wait_for_job "vault-init" "student-api"
 
 # Step 4: Deploy PostgreSQL
 echo "🗄️  Deploying PostgreSQL database..."
-helm install postgresql ./helm/postgresql \
+helm install postgresql ./postgresql \
   --namespace student-api \
   --wait --timeout=300s
 wait_for_deployment "postgres-db" "student-api"
@@ -66,7 +66,7 @@ fi
 
 # Step 6: Deploy Student API
 echo "🚀 Deploying Student API application..."
-helm install student-api ./helm/student-api \
+helm install student-api ./student-api \
   --namespace student-api \
   --wait --timeout=300s
 wait_for_deployment "student-api" "student-api"

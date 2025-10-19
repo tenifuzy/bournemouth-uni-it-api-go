@@ -1,0 +1,47 @@
+# External Secrets Operator configuration
+externalSecrets:
+  name: external-secrets
+  image:
+    repository: ghcr.io/external-secrets/external-secrets
+    tag: v0.9.11
+    pullPolicy: IfNotPresent
+  
+  # Service configuration
+  service:
+    port: 8080
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+# Secret Store configuration
+secretStore:
+  name: vault-backend
+  vault:
+    server: "http://vault-service:8200"
+    path: "secret"
+    version: "v2"
+    token: "root-token"
+
+# External Secret configuration
+externalSecret:
+  name: db-credentials
+  refreshInterval: 15s
+  secretName: db-secret
+  data:
+    - secretKey: DB_USER
+      remoteKey: db-credentials
+      property: username
+    - secretKey: DB_PASSWORD
+      remoteKey: db-credentials
+      property: password
+
+# Namespace configurations
+namespaces:
+  operator: external-secrets-system
+  application: student-api

@@ -168,7 +168,64 @@ vagrant destroy
 - **Direct API 1**: http://localhost:8081
 - **Direct API 2**: http://localhost:8082
 
-### Option 3: Kubernetes Deployment (Production Ready)
+### Option 3: Helm Deployment (Recommended for Production)
+
+#### Prerequisites Check
+```bash
+# Verify installations
+kubectl version --client
+helm version
+```
+
+#### Deploy with Helm Charts
+```bash
+# Clone repository
+git clone https://github.com/tenifuzy/bournemouth-uni-it-api-go.git
+cd bournemouth-uni-it-api-go
+
+# Deploy everything using Helm (Linux/Mac)
+chmod +x helm/deploy-all-helm.sh
+./helm/deploy-all-helm.sh
+
+# Deploy everything using Helm (Windows)
+helm\deploy-all-helm.bat
+```
+
+#### Helm Management
+```bash
+# List all releases
+helm list --all-namespaces
+
+# Check release status
+helm status student-api -n student-api
+
+# Upgrade application
+helm upgrade student-api ./helm/student-api -n student-api
+
+# Scale application
+helm upgrade student-api ./helm/student-api --set app.replicas=3 -n student-api
+
+# Uninstall all releases
+helm uninstall student-api -n student-api
+helm uninstall postgresql -n student-api
+helm uninstall vault -n student-api
+helm uninstall external-secrets -n external-secrets-system
+```
+
+**Access Points:**
+- **LoadBalancer**: `kubectl get svc student-api-loadbalancer -n student-api`
+- **Port Forward**: http://localhost:8080 (after port-forward command)
+- **Ingress**: Configure DNS for `student-api.local`
+
+**Key Features:**
+- 📦 **Helm package management** for easy deployment and upgrades
+- 🔐 **HashiCorp Vault** for secure secret storage
+- 🔄 **External Secrets Operator** for automatic secret sync
+- 🚀 **Init containers** for database migrations
+- 📊 **Configurable values** via Helm values.yaml
+- 🌐 **Multiple access methods** (LoadBalancer, Ingress)
+
+### Option 4: Kubernetes Deployment (Production Ready)
 
 #### Prerequisites Check
 ```bash
@@ -221,7 +278,7 @@ kubectl delete namespace student-api
 - 📊 **Health checks** and **resource limits**
 - 🌐 **Multiple access methods** (LoadBalancer, Ingress)
 
-### Option 4: Local Development
+### Option 5: Local Development
 
 #### 1. Environment Setup
 ```bash
@@ -422,6 +479,22 @@ make vagrant-halt     # Stop Vagrant VM
 make vagrant-destroy  # Destroy Vagrant VM
 ```
 
+#### Helm Operations
+```bash
+# Deploy with Helm
+./helm/deploy-all-helm.sh   # Linux/Mac
+helm\deploy-all-helm.bat    # Windows
+
+# List releases
+helm list --all-namespaces
+
+# Upgrade release
+helm upgrade student-api ./helm/student-api -n student-api
+
+# Uninstall releases
+helm uninstall student-api -n student-api
+```
+
 #### Kubernetes Operations
 ```bash
 # Deploy to Kubernetes
@@ -465,6 +538,13 @@ bournemouth-uni-it-api-go/
 ├── postman/              # Postman collection for API testing
 ├── router/               # Route definitions
 ├── tests/                # Unit tests
+├── helm/                 # Helm charts for package management
+│   ├── student-api/      # Main application Helm chart
+│   ├── postgresql/       # PostgreSQL database Helm chart
+│   ├── vault/            # HashiCorp Vault Helm chart
+│   ├── external-secrets/ # External Secrets Operator chart
+│   ├── deploy-all-helm.sh    # Helm deployment script (Linux/Mac)
+│   └── deploy-all-helm.bat   # Helm deployment script (Windows)
 ├── k8s/                  # Kubernetes deployment manifests
 │   ├── namespaces/       # Namespace configuration
 │   ├── app/              # Application deployment
@@ -677,23 +757,28 @@ make docker-up
 # Vagrant deployment
 vagrant up
 
+# Helm deployment (Recommended)
+./helm/deploy-all-helm.sh     # Linux/Mac
+helm\deploy-all-helm.bat      # Windows
+
 # Kubernetes deployment
-./k8s/deploy-all.sh     # Linux/Mac
-k8s\deploy-all.bat      # Windows
+./k8s/deploy-all.sh           # Linux/Mac
+k8s\deploy-all.bat            # Windows
 
 # View logs
 make docker-logs                              # Docker
 make vagrant-logs                             # Vagrant
-kubectl logs -l app=student-api -n student-api # Kubernetes
+kubectl logs -l app=student-api -n student-api # Kubernetes/Helm
 
 # Stop services
 make docker-down                              # Docker
 vagrant halt                                  # Vagrant
+helm uninstall student-api -n student-api    # Helm
 kubectl delete namespace student-api          # Kubernetes
 
 # Access database
 docker exec -it postgres_db psql -U postgres -d student_db                    # Docker/Vagrant
-kubectl exec -it deployment/postgres-db -n student-api -- psql -U postgres -d student_db # Kubernetes
+kubectl exec -it deployment/postgres-db -n student-api -- psql -U postgres -d student_db # Kubernetes/Helm
 ```
 
 ### Access URLs
@@ -701,10 +786,17 @@ kubectl exec -it deployment/postgres-db -n student-api -- psql -U postgres -d st
 - **Vagrant Load Balanced**: http://localhost:8080
 - **Vagrant API 1**: http://localhost:8081
 - **Vagrant API 2**: http://localhost:8082
+- **Helm (Port Forward)**: http://localhost:8080 (after `kubectl port-forward`)
+- **Helm (LoadBalancer)**: Check `kubectl get svc -n student-api`
 - **Kubernetes (Port Forward)**: http://localhost:8080 (after `kubectl port-forward`)
 - **Kubernetes (LoadBalancer)**: Check `kubectl get svc -n student-api`
 - **Health Check**: http://localhost:8080/healthcheck
 - **API Endpoints**: http://localhost:8080/api/v1/students
+
+### Helm Specific
+- **Charts Directory**: [helm/](helm/)
+- **Deployment Scripts**: `helm/deploy-all-helm.sh` (Linux/Mac) or `helm/deploy-all-helm.bat` (Windows)
+- **Individual Charts**: student-api, postgresql, vault, external-secrets
 
 ### Kubernetes Specific
 - **Comprehensive Guide**: [k8s/README-K8S.md](k8s/README-K8S.md)

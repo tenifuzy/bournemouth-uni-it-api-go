@@ -1,0 +1,49 @@
+# PostgreSQL configuration
+postgresql:
+  name: postgres-db
+  image:
+    repository: postgres
+    tag: 15-alpine
+    pullPolicy: IfNotPresent
+  
+  # Database configuration
+  database:
+    name: student_db
+    user: postgres
+    password: postgres
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 5432
+  
+  # Storage configuration
+  persistence:
+    enabled: true
+    size: 1Gi
+    accessMode: ReadWriteOnce
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+  # Node selector
+  nodeSelector:
+    type: database
+  
+  # Health checks
+  healthCheck:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+# Namespace
+namespace: student-api

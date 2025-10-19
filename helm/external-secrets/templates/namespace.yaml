@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.namespaces.operator }}
+  labels:
+    name: {{ .Values.namespaces.operator }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}

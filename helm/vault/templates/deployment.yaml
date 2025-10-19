@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.vault.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.vault.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.vault.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.vault.name }}
+    spec:
+      {{- if .Values.vault.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.vault.nodeSelector | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.vault.name }}
+        image: "{{ .Values.vault.image.repository }}:{{ .Values.vault.image.tag }}"
+        imagePullPolicy: {{ .Values.vault.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.vault.service.port }}
+        env:
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          value: "{{ .Values.vault.dev.rootToken }}"
+        - name: VAULT_DEV_LISTEN_ADDRESS
+          value: "{{ .Values.vault.dev.listenAddress }}"
+        - name: VAULT_ADDR
+          value: "http://127.0.0.1:{{ .Values.vault.service.port }}"
+        command:
+        - vault
+        - server
+        - -dev
+        - -dev-root-token-id={{ .Values.vault.dev.rootToken }}
+        - -dev-listen-address={{ .Values.vault.dev.listenAddress }}
+        resources:
+          {{- toYaml .Values.vault.resources | nindent 10 }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.vault.healthCheck.path }}
+            port: {{ .Values.vault.service.port }}
+          initialDelaySeconds: {{ .Values.vault.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.vault.healthCheck.periodSeconds }}

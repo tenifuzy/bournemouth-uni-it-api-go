@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.postgresql.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.postgresql.name }}
+    tier: database
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.postgresql.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.postgresql.name }}
+        tier: database
+    spec:
+      {{- if .Values.postgresql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.postgresql.nodeSelector | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: postgres
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.postgresql.service.port }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.postgresql.name }}-config
+        - secretRef:
+            name: {{ .Values.postgresql.name }}-secret
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.name }}-secret
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgresql.name }}-secret
+              key: POSTGRES_PASSWORD
+        {{- if .Values.postgresql.persistence.enabled }}
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        {{- end }}
+        resources:
+          {{- toYaml .Values.postgresql.resources | nindent 10 }}
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.postgresql.database.user }}
+          initialDelaySeconds: {{ .Values.postgresql.healthCheck.initialDelaySeconds }}
+          periodSeconds: {{ .Values.postgresql.healthCheck.periodSeconds }}
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - {{ .Values.postgresql.database.user }}
+          initialDelaySeconds: {{ .Values.postgresql.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.postgresql.readinessProbe.periodSeconds }}
+      {{- if .Values.postgresql.persistence.enabled }}
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.postgresql.name }}-pvc
+      {{- end }}

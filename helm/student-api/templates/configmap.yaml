@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.app.name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  DB_HOST: "{{ .Values.database.host }}"
+  DB_PORT: "{{ .Values.database.port }}"
+  DB_NAME: "{{ .Values.database.name }}"
+  DB_SSL_MODE: "{{ .Values.database.sslMode }}"
+  SERVER_PORT: "{{ .Values.configMap.serverPort }}"

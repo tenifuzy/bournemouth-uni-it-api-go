@@ -1,0 +1,50 @@
+# Vault configuration
+vault:
+  name: vault
+  image:
+    repository: hashicorp/vault
+    tag: 1.15.2
+    pullPolicy: IfNotPresent
+  
+  # Development mode settings
+  dev:
+    enabled: true
+    rootToken: root-token
+    listenAddress: "0.0.0.0:8200"
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8200
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  
+  # Node selector
+  nodeSelector:
+    type: dependent_services
+  
+  # Health checks
+  healthCheck:
+    path: /v1/sys/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+# Vault initialization job
+vaultInit:
+  enabled: true
+  image:
+    repository: hashicorp/vault
+    tag: 1.15.2
+  credentials:
+    username: postgres
+    password: postgres
+
+# Namespace
+namespace: student-api

@@ -1,0 +1,16 @@
+apiVersion: v2
+name: external-secrets
+description: External Secrets Operator for Kubernetes
+version: 1.0.0
+appVersion: "0.9.11"
+keywords:
+  - secrets
+  - external-secrets
+  - vault
+  - operator
+home: https://external-secrets.io/
+sources:
+  - https://github.com/external-secrets/external-secrets
+maintainers:
+  - name: Student API Team
+    email: support@bournemouth.ac.uk

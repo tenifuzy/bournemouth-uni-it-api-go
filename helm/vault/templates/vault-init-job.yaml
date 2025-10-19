@@ -1,0 +1,31 @@
+{{- if .Values.vaultInit.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.vault.name }}-init
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.vault.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: vault-init
+        image: "{{ .Values.vaultInit.image.repository }}:{{ .Values.vaultInit.image.tag }}"
+        env:
+        - name: VAULT_ADDR
+          value: "http://vault-service:{{ .Values.vault.service.port }}"
+        - name: VAULT_TOKEN
+          value: "{{ .Values.vault.dev.rootToken }}"
+        command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 30
+          vault kv put secret/db-credentials username={{ .Values.vaultInit.credentials.username }} password={{ .Values.vaultInit.credentials.password }}
+          echo "Database credentials stored in Vault"
+{{- end }}

@@ -1,0 +1,15 @@
+apiVersion: v2
+name: postgresql
+description: PostgreSQL database for Student API
+version: 1.0.0
+appVersion: "15"
+keywords:
+  - database
+  - postgresql
+  - postgres
+home: https://www.postgresql.org/
+sources:
+  - https://github.com/postgres/postgres
+maintainers:
+  - name: Student API Team
+    email: support@bournemouth.ac.uk

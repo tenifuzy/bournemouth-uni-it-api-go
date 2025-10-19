@@ -1,0 +1,89 @@
+# Default values for student-api
+# This is a YAML-formatted file.
+
+# Application configuration
+app:
+  name: student-api
+  image:
+    repository: tenifuzy01/v1
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8080
+
+# Database configuration
+database:
+  host: postgres-service
+  port: 5432
+  name: student_db
+  sslMode: disable
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  loadBalancer:
+    enabled: true
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  host: student-api.local
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+# ConfigMap settings
+configMap:
+  serverPort: "8080"
+
+# Resource limits and requests
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+# Init container resources
+initContainer:
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+# Node selector
+nodeSelector:
+  type: application
+
+# Health check configuration
+healthCheck:
+  path: /healthcheck
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Readiness probe configuration
+readinessProbe:
+  path: /healthcheck
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Startup probe configuration
+startupProbe:
+  path: /healthcheck
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 30
+
+# Namespace
+namespace: student-api

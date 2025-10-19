@@ -1,0 +1,16 @@
+apiVersion: v2
+name: student-api
+description: Bournemouth University IT Student API Helm Chart
+version: 1.0.0
+appVersion: "1.0"
+keywords:
+  - api
+  - rest
+  - student
+  - bournemouth
+home: https://github.com/tenifuzy/bournemouth-uni-it-api-go
+sources:
+  - https://github.com/tenifuzy/bournemouth-uni-it-api-go
+maintainers:
+  - name: Student API Team
+    email: support@bournemouth.ac.uk

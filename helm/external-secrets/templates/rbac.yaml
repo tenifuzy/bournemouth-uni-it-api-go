@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.externalSecrets.name }}
+  namespace: {{ .Values.namespaces.operator }}
+  labels:
+    app: {{ .Values.externalSecrets.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.externalSecrets.name }}
+  labels:
+    app: {{ .Values.externalSecrets.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch"]
+- apiGroups: ["external-secrets.io"]
+  resources: ["externalsecrets", "secretstores"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.externalSecrets.name }}
+  labels:
+    app: {{ .Values.externalSecrets.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Values.externalSecrets.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.externalSecrets.name }}
+  namespace: {{ .Values.namespaces.operator }}

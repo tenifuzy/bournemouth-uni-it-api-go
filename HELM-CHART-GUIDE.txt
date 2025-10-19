@@ -1,0 +1,446 @@
+================================================================================
+                    HELM CHART DEPLOYMENT GUIDE
+        Bournemouth University IT API - Kubernetes Package Management
+================================================================================
+
+WHAT IS HELM?
+=============
+Helm is the package manager for Kubernetes. It helps you:
+- Package Kubernetes applications into reusable charts
+- Manage complex deployments with dependencies
+- Version and rollback applications
+- Share applications via repositories
+- Template Kubernetes manifests with variables
+
+Think of Helm as "apt/yum for Kubernetes" - it simplifies application deployment.
+
+HELM CONCEPTS
+=============
+
+1. CHART
+   - A collection of Kubernetes manifest templates
+   - Contains metadata, dependencies, and configuration
+   - Packaged as .tgz files or directories
+
+2. RELEASE
+   - An instance of a chart deployed to Kubernetes
+   - Each release has a unique name and version
+   - Can have multiple releases of the same chart
+
+3. VALUES
+   - Configuration parameters for charts
+   - Override default settings
+   - Can be provided via files or command line
+
+4. TEMPLATES
+   - Kubernetes manifests with Go template syntax
+   - Use {{ .Values.key }} for dynamic values
+   - Support conditionals, loops, and functions
+
+5. REPOSITORY
+   - Storage for Helm charts
+   - Can be public (Artifact Hub) or private
+   - Examples: stable, bitnami, prometheus-community
+
+HELM INSTALLATION
+=================
+
+# Install Helm (Linux/macOS)
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Install Helm (Windows)
+choco install kubernetes-helm
+
+# Verify installation
+helm version
+
+# Add popular repositories
+helm repo add stable https://charts.helm.sh/stable
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+
+DEPLOYING YOUR APPLICATION WITH HELM
+====================================
+
+OPTION 1: Using Existing Charts
+-------------------------------
+
+# Deploy PostgreSQL using Bitnami chart
+helm install postgres bitnami/postgresql \
+  --set auth.postgresPassword=postgres \
+  --set auth.database=student_db \
+  --namespace student-api \
+  --create-namespace
+
+# Deploy External Secrets Operator
+helm install external-secrets external-secrets/external-secrets \
+  --namespace external-secrets-system \
+  --create-namespace
+
+# Deploy HashiCorp Vault
+helm install vault hashicorp/vault \
+  --set server.dev.enabled=true \
+  --set server.dev.devRootToken=root \
+  --namespace vault-system \
+  --create-namespace
+
+OPTION 2: Creating Custom Chart
+-------------------------------
+
+# Create a new chart for your application
+helm create student-api-chart
+
+# This creates structure:
+student-api-chart/
+├── Chart.yaml          # Chart metadata
+├── values.yaml         # Default configuration values
+├── templates/          # Kubernetes manifest templates
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── configmap.yaml
+│   ├── secret.yaml
+│   └── _helpers.tpl   # Template helpers
+└── charts/            # Chart dependencies
+
+CREATING YOUR HELM CHART
+========================
+
+1. CHART.YAML (Metadata)
+------------------------
+apiVersion: v2
+name: student-api
+description: Bournemouth University IT Student API
+version: 1.0.0
+appVersion: "1.0"
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+  - name: external-secrets
+    version: "0.9.x"
+    repository: "https://charts.external-secrets.io"
+
+2. VALUES.YAML (Configuration)
+-----------------------------
+# Application settings
+app:
+  name: student-api
+  image:
+    repository: tenifuzy01/v1
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  port: 8080
+
+# Database settings
+database:
+  host: postgres-service
+  port: 5432
+  name: student_db
+  user: postgres
+  password: postgres
+
+# Service settings
+service:
+  type: ClusterIP
+  port: 8080
+  nodePort: 30080
+
+# Ingress settings
+ingress:
+  enabled: false
+  host: student-api.local
+
+# Resources
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+# Vault settings
+vault:
+  enabled: true
+  server: "http://vault-service.vault-system.svc.cluster.local:8200"
+  token: "root"
+
+3. DEPLOYMENT TEMPLATE
+---------------------
+# templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.app.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      containers:
+      - name: {{ .Values.app.name }}
+        image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+        ports:
+        - containerPort: {{ .Values.app.port }}
+        env:
+        - name: DB_HOST
+          value: "{{ .Values.database.host }}"
+        - name: DB_PORT
+          value: "{{ .Values.database.port }}"
+        - name: DB_NAME
+          value: "{{ .Values.database.name }}"
+        {{- if .Values.vault.enabled }}
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: DB_PASSWORD
+        {{- else }}
+        - name: DB_USER
+          value: "{{ .Values.database.user }}"
+        - name: DB_PASSWORD
+          value: "{{ .Values.database.password }}"
+        {{- end }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+
+4. SERVICE TEMPLATE
+------------------
+# templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.app.name }}-service
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: {{ .Values.app.name }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: {{ .Values.app.port }}
+    {{- if eq .Values.service.type "NodePort" }}
+    nodePort: {{ .Values.service.nodePort }}
+    {{- end }}
+  type: {{ .Values.service.type }}
+
+HELM DEPLOYMENT COMMANDS
+========================
+
+# Install chart
+helm install my-student-api ./student-api-chart \
+  --namespace student-api \
+  --create-namespace
+
+# Install with custom values
+helm install my-student-api ./student-api-chart \
+  --set app.replicas=3 \
+  --set service.type=NodePort \
+  --namespace student-api
+
+# Install with values file
+helm install my-student-api ./student-api-chart \
+  --values custom-values.yaml \
+  --namespace student-api
+
+# Upgrade release
+helm upgrade my-student-api ./student-api-chart \
+  --set app.image.tag=v2.0 \
+  --namespace student-api
+
+# Rollback release
+helm rollback my-student-api 1 --namespace student-api
+
+# Uninstall release
+helm uninstall my-student-api --namespace student-api
+
+HELM MANAGEMENT COMMANDS
+========================
+
+# List releases
+helm list --all-namespaces
+
+# Get release status
+helm status my-student-api --namespace student-api
+
+# Get release history
+helm history my-student-api --namespace student-api
+
+# Get release values
+helm get values my-student-api --namespace student-api
+
+# Get release manifest
+helm get manifest my-student-api --namespace student-api
+
+# Test release
+helm test my-student-api --namespace student-api
+
+# Dry run (preview changes)
+helm install my-student-api ./student-api-chart --dry-run --debug
+
+ADVANCED HELM FEATURES
+======================
+
+1. DEPENDENCIES
+--------------
+# Chart.yaml
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+
+# Update dependencies
+helm dependency update
+
+2. HOOKS
+-------
+# Pre-install hook for database migration
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ .Values.app.name }}-migration"
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+
+3. TESTS
+-------
+# templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Values.app.name }}-test"
+  annotations:
+    "helm.sh/hook": test
+spec:
+  restartPolicy: Never
+  containers:
+  - name: wget
+    image: busybox
+    command: ['wget']
+    args: ['{{ .Values.app.name }}-service:{{ .Values.service.port }}/healthcheck']
+
+BEST PRACTICES
+==============
+
+1. CHART STRUCTURE
+   - Use semantic versioning
+   - Include comprehensive README.md
+   - Provide sensible defaults in values.yaml
+   - Use _helpers.tpl for common templates
+
+2. TEMPLATES
+   - Use {{ include }} instead of {{ template }}
+   - Validate required values with {{ required }}
+   - Use {{ toYaml }} for complex structures
+   - Add resource limits and requests
+
+3. VALUES
+   - Group related values together
+   - Use camelCase for consistency
+   - Provide comments explaining options
+   - Include examples for complex configurations
+
+4. SECURITY
+   - Never hardcode secrets in templates
+   - Use Kubernetes secrets or external secret management
+   - Validate input values
+   - Use least privilege principles
+
+TROUBLESHOOTING
+===============
+
+# Debug template rendering
+helm template my-student-api ./student-api-chart --debug
+
+# Check chart for issues
+helm lint ./student-api-chart
+
+# Validate against Kubernetes API
+helm install my-student-api ./student-api-chart --dry-run --validate
+
+# Get detailed error information
+helm install my-student-api ./student-api-chart --debug --wait
+
+# Check release events
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+HELM WITH YOUR CURRENT SETUP
+============================
+
+To convert your current Kubernetes manifests to Helm:
+
+1. Create chart structure:
+   helm create bournemouth-student-api
+
+2. Move your YAML files to templates/ directory:
+   - vault.yml → templates/vault.yaml
+   - database.yml → templates/database.yaml
+   - application.yml → templates/application.yaml
+   - eso.yml → templates/eso.yaml
+
+3. Replace hardcoded values with template variables:
+   - image: tenifuzy01/v1:latest → image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+   - replicas: 2 → replicas: {{ .Values.app.replicas }}
+
+4. Create values.yaml with your configuration
+
+5. Deploy with Helm:
+   helm install student-api ./bournemouth-student-api --namespace student-api --create-namespace
+
+REFERENCE DOCUMENTATION
+=======================
+
+Official Helm Documentation:
+- https://helm.sh/docs/
+
+Helm Chart Best Practices:
+- https://helm.sh/docs/chart_best_practices/
+
+Helm Template Guide:
+- https://helm.sh/docs/chart_template_guide/
+
+Popular Chart Repositories:
+- Artifact Hub: https://artifacthub.io/
+- Bitnami: https://charts.bitnami.com/bitnami
+- Prometheus: https://prometheus-community.github.io/helm-charts
+- External Secrets: https://charts.external-secrets.io
+
+Helm Chart Examples:
+- https://github.com/helm/charts (archived but good examples)
+- https://github.com/bitnami/charts
+
+Go Template Documentation:
+- https://pkg.go.dev/text/template
+
+Sprig Template Functions (used by Helm):
+- https://masterminds.github.io/sprig/
+
+CONCLUSION
+==========
+
+Helm provides powerful package management for Kubernetes applications:
+- Simplifies complex deployments
+- Enables configuration management
+- Supports versioning and rollbacks
+- Facilitates application sharing
+- Reduces deployment complexity
+
+Start with simple charts and gradually add advanced features as needed.
+The investment in learning Helm pays off significantly for production deployments.
+
+================================================================================

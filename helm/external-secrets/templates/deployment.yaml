@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.externalSecrets.name }}
+  namespace: {{ .Values.namespaces.operator }}
+  labels:
+    app: {{ .Values.externalSecrets.name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.externalSecrets.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.externalSecrets.name }}
+    spec:
+      serviceAccountName: {{ .Values.externalSecrets.name }}
+      containers:
+      - name: {{ .Values.externalSecrets.name }}
+        image: "{{ .Values.externalSecrets.image.repository }}:{{ .Values.externalSecrets.image.tag }}"
+        imagePullPolicy: {{ .Values.externalSecrets.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.externalSecrets.service.port }}
+        env:
+        - name: METRICS_ADDR
+          value: ":{{ .Values.externalSecrets.service.port }}"
+        resources:
+          {{- toYaml .Values.externalSecrets.resources | nindent 10 }}

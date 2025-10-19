@@ -21,14 +21,19 @@ wait_for_job() {
     kubectl wait --for=condition=complete --timeout=300s job/$job -n $namespace
 }
 
-# Step 1: Deploy External Secrets Operator
+# Step 1: Clean up existing CRDs if they exist
+echo "🧹 Cleaning up existing External Secrets resources..."
+kubectl delete crd externalsecrets.external-secrets.io secretstores.external-secrets.io --ignore-not-found=true
+kubectl delete namespace external-secrets-system --ignore-not-found=true
+
+# Step 2: Deploy External Secrets Operator
 echo "🔌 Deploying External Secrets Operator..."
 helm install external-secrets ./external-secrets \
   --create-namespace \
   --wait --timeout=300s
 wait_for_deployment "external-secrets" "external-secrets-system"
 
-# Step 2: Deploy Vault
+# Step 3: Deploy Vault
 echo "🔐 Deploying HashiCorp Vault..."
 helm install vault ./vault \
   --namespace student-api \
@@ -36,18 +41,18 @@ helm install vault ./vault \
   --wait --timeout=300s
 wait_for_deployment "vault" "student-api"
 
-# Step 3: Wait for Vault initialization
+# Step 4: Wait for Vault initialization
 echo "🔑 Waiting for Vault initialization..."
 wait_for_job "vault-init" "student-api"
 
-# Step 4: Deploy PostgreSQL
+# Step 5: Deploy PostgreSQL
 echo "🗄️  Deploying PostgreSQL database..."
 helm install postgresql ./postgresql \
   --namespace student-api \
   --wait --timeout=300s
 wait_for_deployment "postgres-db" "student-api"
 
-# Step 5: Wait for External Secret to create db-secret
+# Step 6: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
 timeout=60
 while [ $timeout -gt 0 ]; do
@@ -64,7 +69,7 @@ if [ $timeout -le 0 ]; then
     echo "⚠️  External Secret timeout - secret may not be created yet"
 fi
 
-# Step 6: Deploy Student API
+# Step 7: Deploy Student API
 echo "🚀 Deploying Student API application..."
 helm install student-api ./student-api \
   --namespace student-api \

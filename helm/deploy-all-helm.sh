@@ -100,7 +100,7 @@ helm upgrade --install postgresql ./postgresql \
 wait_for_deployment "postgres-db" "student-api"
 
 
-e# Step 7: Wait for External Secret to create db-secret
+# Step 7: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
 timeout=180
 while [ $timeout -gt 0 ]; do

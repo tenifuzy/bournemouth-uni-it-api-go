@@ -85,5 +85,10 @@ startupProbe:
   timeoutSeconds: 3
   failureThreshold: 30
 
+# External Secrets configuration
+externalSecrets:
+  enabled: true
+  refreshInterval: 30s
+
 # Namespace
 namespace: student-api

@@ -26,16 +26,20 @@ echo "🧹 Cleaning up existing External Secrets resources..."
 kubectl delete crd externalsecrets.external-secrets.io secretstores.external-secrets.io --ignore-not-found=true
 kubectl delete namespace external-secrets-system --ignore-not-found=true
 
-# Step 2: Deploy External Secrets Operator (CRDs and Operator only)
-echo "🔌 Deploying External Secrets Operator..."
-helm install external-secrets ./external-secrets \
+# Step 2: Install External Secrets Operator CRDs first
+echo "📦 Installing External Secrets Operator CRDs..."
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+helm install external-secrets external-secrets/external-secrets \
+  --namespace external-secrets-system \
   --create-namespace \
   --wait --timeout=300s
-wait_for_deployment "external-secrets" "external-secrets-system"
 
-# Wait for CRDs to be ready
-echo "⏳ Waiting for External Secrets CRDs to be ready..."
-sleep 10
+# Wait for CRDs to be established
+echo "⏳ Waiting for External Secrets CRDs to be established..."
+kubectl wait --for condition=established --timeout=60s crd/secretstores.external-secrets.io
+kubectl wait --for condition=established --timeout=60s crd/externalsecrets.external-secrets.io
+echo "✅ CRDs are ready"
 
 # Step 3: Deploy Vault
 echo "🔐 Deploying HashiCorp Vault..."
@@ -56,11 +60,7 @@ helm install postgresql ./postgresql \
   --wait --timeout=300s
 wait_for_deployment "postgres-db" "student-api"
 
-# Step 6: Deploy External Secrets application resources
-echo "🔗 Deploying External Secrets application resources..."
-helm template external-secrets-app ./external-secrets | kubectl apply -f -
-
-# Step 7: Wait for External Secret to create db-secret
+# Step 6: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
 timeout=60
 while [ $timeout -gt 0 ]; do
@@ -77,7 +77,7 @@ if [ $timeout -le 0 ]; then
     echo "⚠️  External Secret timeout - secret may not be created yet"
 fi
 
-# Step 8: Deploy Student API
+# Step 7: Deploy Student API
 echo "🚀 Deploying Student API application..."
 helm install student-api ./student-api \
   --namespace student-api \

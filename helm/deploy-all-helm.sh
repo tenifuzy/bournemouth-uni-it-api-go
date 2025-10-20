@@ -99,9 +99,10 @@ helm upgrade --install postgresql ./postgresql \
   --wait --timeout=300s
 wait_for_deployment "postgres-db" "student-api"
 
-# Step 7: Wait for External Secret to create db-secret
+
+e# Step 7: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
-timeout=60
+timeout=180
 while [ $timeout -gt 0 ]; do
     if kubectl get secret db-secret -n student-api >/dev/null 2>&1; then
         echo "✅ Database secret created successfully by External Secrets"
@@ -113,8 +114,22 @@ while [ $timeout -gt 0 ]; do
 done
 
 if [ $timeout -le 0 ]; then
-    echo "⚠️ External Secret timeout - secret may not be created yet"
+    echo "⚠️  External Secret not ready after 180s — continuing anyway (it may appear shortly)"
 fi
+
+# Step 8: Ensure namespace ownership before Student API
+echo "🏷️ Re-labeling namespace for Student API Helm ownership..."
+kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite >/dev/null 2>&1 || true
+kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite >/dev/null 2>&1 || true
+kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite >/dev/null 2>&1 || true
+
+# Step 9: Deploy Student API
+echo "🚀 Deploying Student API application..."
+helm upgrade --install student-api ./student-api \
+  --namespace student-api \
+  --wait --timeout=300s
+wait_for_deployment "student-api" "student-api"
+
 
 # Step 8: Ensure namespace ownership before Student API
 echo "🏷️ Re-labeling namespace for Student API Helm ownership..."

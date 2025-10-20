@@ -45,5 +45,10 @@ postgresql:
     initialDelaySeconds: 5
     periodSeconds: 5
 
+# External Secrets configuration
+externalSecrets:
+  enabled: true
+  refreshInterval: 30s
+
 # Namespace
 namespace: student-api

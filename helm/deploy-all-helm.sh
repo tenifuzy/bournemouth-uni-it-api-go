@@ -24,24 +24,19 @@ wait_for_job() {
 # Step 1: Clean up existing External Secrets resources completely
 echo "🧹 Cleaning up existing External Secrets resources..."
 
-# Delete all External Secrets CRDs
 kubectl get crd | grep external-secrets.io | awk '{print $1}' | xargs -r kubectl delete crd --ignore-not-found=true
 
-# Delete all Helm releases first
 helm uninstall student-api -n student-api --ignore-not-found || true
 helm uninstall postgresql -n student-api --ignore-not-found || true
 helm uninstall vault -n student-api --ignore-not-found || true
 helm uninstall external-secrets -n external-secrets-system --ignore-not-found || true
 
-# Force delete namespaces
 kubectl delete namespace external-secrets-system --force --grace-period=0 --ignore-not-found=true || true
 kubectl delete namespace student-api --force --grace-period=0 --ignore-not-found=true || true
 
-# Wait for cleanup to complete
 echo "⏳ Waiting for cleanup to complete..."
 sleep 15
 
-# Verify namespaces are gone
 echo "🔍 Verifying cleanup..."
 kubectl get namespace | grep -E "(student-api|external-secrets-system)" || echo "Namespaces cleaned up successfully"
 
@@ -54,49 +49,57 @@ helm install external-secrets external-secrets/external-secrets \
   --create-namespace \
   --wait --timeout=300s
 
-# Wait for CRDs to be established
 echo "⏳ Waiting for External Secrets CRDs to be established..."
 kubectl wait --for condition=established --timeout=120s crd/secretstores.external-secrets.io
 kubectl wait --for condition=established --timeout=120s crd/externalsecrets.external-secrets.io
 
-# Additional wait for API server to recognize CRDs
 echo "⏳ Waiting for API server to recognize CRDs..."
 sleep 30
 
-# Verify CRDs are available
 kubectl api-resources | grep external-secrets || echo "Warning: External Secrets CRDs not yet available"
 echo "✅ CRDs are ready"
 
-# Step 3: Deploy Vault
-echo "🔐 Deploying HashiCorp Vault..."
-helm upgrade vault ./vault \
-  --namespace student-api \
-  --create-namespace \
-  --wait --timeout=300s
-wait_for_deployment "vault" "student-api"
-
-echo "🏷️  Labeling namespace student-api for Helm ownership..."
+# Step 3: Ensure namespace exists and is labeled BEFORE installing anything
+echo "🏷️ Ensuring namespace student-api exists and has proper Helm ownership..."
+kubectl create namespace student-api --dry-run=client -o yaml | kubectl apply -f -
 kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
 
-# Step 4: Wait for Vault initialization
+# Step 4: Deploy Vault (conditional install/upgrade)
+echo "🔐 Deploying HashiCorp Vault..."
+
+if helm status vault -n student-api >/dev/null 2>&1; then
+  echo "🔄 Vault release exists — upgrading..."
+  helm upgrade vault ./vault \
+    --namespace student-api \
+    --wait --timeout=300s
+else
+  echo "🆕 Vault not found — installing fresh..."
+  helm install vault ./vault \
+    --namespace student-api \
+    --wait --timeout=300s
+fi
+
+wait_for_deployment "vault" "student-api"
+
+# Step 5: Wait for Vault initialization
 echo "🔑 Waiting for Vault initialization..."
 wait_for_job "vault-init" "student-api"
 
-# Step 5: Deploy PostgreSQL
-echo "🗄️  Deploying PostgreSQL database..."
-helm upgrade postgresql ./postgresql \
-  --namespace student-api \
-  --wait --timeout=300s
-wait_for_deployment "postgres-db" "student-api"
-# Ensure namespace is consistently owned by Helm before further installs
+# Step 6: Ensure namespace ownership before PostgreSQL
+echo "🏷️ Re-labeling namespace for PostgreSQL Helm ownership..."
 kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
 
+echo "🗄️ Deploying PostgreSQL database..."
+helm upgrade --install postgresql ./postgresql \
+  --namespace student-api \
+  --wait --timeout=300s
+wait_for_deployment "postgres-db" "student-api"
 
-# Step 6: Wait for External Secret to create db-secret
+# Step 7: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
 timeout=60
 while [ $timeout -gt 0 ]; do
@@ -110,21 +113,20 @@ while [ $timeout -gt 0 ]; do
 done
 
 if [ $timeout -le 0 ]; then
-    echo "⚠️  External Secret timeout - secret may not be created yet"
+    echo "⚠️ External Secret timeout - secret may not be created yet"
 fi
 
-# Step 7: Deploy Student API
-echo "🚀 Deploying Student API application..."
-helm upgrade student-api ./student-api \
-  --namespace student-api \
-  --wait --timeout=300s
-wait_for_deployment "student-api" "student-api"
-
-# Ensure namespace is consistently owned by Helm before further installs
+# Step 8: Ensure namespace ownership before Student API
+echo "🏷️ Re-labeling namespace for Student API Helm ownership..."
 kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
 kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
 
+echo "🚀 Deploying Student API application..."
+helm upgrade --install student-api ./student-api \
+  --namespace student-api \
+  --wait --timeout=300s
+wait_for_deployment "student-api" "student-api"
 
 echo ""
 echo "✅ Helm deployment completed successfully!"
@@ -132,8 +134,6 @@ echo ""
 echo "📋 Access Information:"
 echo "====================="
 
-# Get service information
-echo "🔍 Getting service information..."
 kubectl get services -n student-api
 
 echo ""
@@ -147,32 +147,10 @@ if kubectl get service student-api-loadbalancer -n student-api >/dev/null 2>&1; 
     fi
 fi
 
-# For local development (minikube/kind)
 echo "   Port Forward: kubectl port-forward svc/student-api-service 8080:8080 -n student-api"
 echo ""
 
 echo "🧪 Test Commands:"
 echo "================"
-echo "# Health Check:"
 echo "curl http://localhost:8080/healthcheck"
-echo ""
-echo "# Get Students:"
 echo "curl http://localhost:8080/api/v1/students"
-echo ""
-
-echo "🔍 Useful Helm Commands:"
-echo "========================"
-echo "# List releases:"
-echo "helm list --all-namespaces"
-echo ""
-echo "# Check release status:"
-echo "helm status student-api -n student-api"
-echo ""
-echo "# Upgrade release:"
-echo "helm upgrade student-api ./student-api -n student-api"
-echo ""
-echo "# Uninstall all releases:"
-echo "helm uninstall student-api -n student-api"
-echo "helm uninstall postgresql -n student-api"
-echo "helm uninstall vault -n student-api"
-echo "helm uninstall external-secrets -n external-secrets-system"

@@ -21,10 +21,29 @@ wait_for_job() {
     kubectl wait --for=condition=complete --timeout=300s job/$job -n $namespace
 }
 
-# Step 1: Clean up existing CRDs if they exist
+# Step 1: Clean up existing External Secrets resources completely
 echo "🧹 Cleaning up existing External Secrets resources..."
-kubectl delete crd externalsecrets.external-secrets.io secretstores.external-secrets.io --ignore-not-found=true
-kubectl delete namespace external-secrets-system --ignore-not-found=true
+
+# Delete all External Secrets CRDs
+kubectl get crd | grep external-secrets.io | awk '{print $1}' | xargs -r kubectl delete crd --ignore-not-found=true
+
+# Delete all Helm releases first
+helm uninstall student-api -n student-api --ignore-not-found || true
+helm uninstall postgresql -n student-api --ignore-not-found || true
+helm uninstall vault -n student-api --ignore-not-found || true
+helm uninstall external-secrets -n external-secrets-system --ignore-not-found || true
+
+# Force delete namespaces
+kubectl delete namespace external-secrets-system --force --grace-period=0 --ignore-not-found=true || true
+kubectl delete namespace student-api --force --grace-period=0 --ignore-not-found=true || true
+
+# Wait for cleanup to complete
+echo "⏳ Waiting for cleanup to complete..."
+sleep 15
+
+# Verify namespaces are gone
+echo "🔍 Verifying cleanup..."
+kubectl get namespace | grep -E "(student-api|external-secrets-system)" || echo "Namespaces cleaned up successfully"
 
 # Step 2: Install External Secrets Operator CRDs first
 echo "📦 Installing External Secrets Operator CRDs..."

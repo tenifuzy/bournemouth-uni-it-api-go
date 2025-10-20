@@ -69,11 +69,16 @@ echo "✅ CRDs are ready"
 
 # Step 3: Deploy Vault
 echo "🔐 Deploying HashiCorp Vault..."
-helm install vault ./vault \
+helm upgrade vault ./vault \
   --namespace student-api \
   --create-namespace \
   --wait --timeout=300s
 wait_for_deployment "vault" "student-api"
+
+echo "🏷️  Labeling namespace student-api for Helm ownership..."
+kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
 
 # Step 4: Wait for Vault initialization
 echo "🔑 Waiting for Vault initialization..."
@@ -81,10 +86,15 @@ wait_for_job "vault-init" "student-api"
 
 # Step 5: Deploy PostgreSQL
 echo "🗄️  Deploying PostgreSQL database..."
-helm install postgresql ./postgresql \
+helm upgrade postgresql ./postgresql \
   --namespace student-api \
   --wait --timeout=300s
 wait_for_deployment "postgres-db" "student-api"
+# Ensure namespace is consistently owned by Helm before further installs
+kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
+
 
 # Step 6: Wait for External Secret to create db-secret
 echo "⏳ Waiting for External Secret to create database secret..."
@@ -105,10 +115,16 @@ fi
 
 # Step 7: Deploy Student API
 echo "🚀 Deploying Student API application..."
-helm install student-api ./student-api \
+helm upgrade student-api ./student-api \
   --namespace student-api \
   --wait --timeout=300s
 wait_for_deployment "student-api" "student-api"
+
+# Ensure namespace is consistently owned by Helm before further installs
+kubectl label namespace student-api app.kubernetes.io/managed-by=Helm --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-name=student-api --overwrite
+kubectl annotate namespace student-api meta.helm.sh/release-namespace=student-api --overwrite
+
 
 echo ""
 echo "✅ Helm deployment completed successfully!"

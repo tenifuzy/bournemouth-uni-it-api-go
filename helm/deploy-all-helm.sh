@@ -56,8 +56,15 @@ helm install external-secrets external-secrets/external-secrets \
 
 # Wait for CRDs to be established
 echo "⏳ Waiting for External Secrets CRDs to be established..."
-kubectl wait --for condition=established --timeout=60s crd/secretstores.external-secrets.io
-kubectl wait --for condition=established --timeout=60s crd/externalsecrets.external-secrets.io
+kubectl wait --for condition=established --timeout=120s crd/secretstores.external-secrets.io
+kubectl wait --for condition=established --timeout=120s crd/externalsecrets.external-secrets.io
+
+# Additional wait for API server to recognize CRDs
+echo "⏳ Waiting for API server to recognize CRDs..."
+sleep 30
+
+# Verify CRDs are available
+kubectl api-resources | grep external-secrets || echo "Warning: External Secrets CRDs not yet available"
 echo "✅ CRDs are ready"
 
 # Step 3: Deploy Vault

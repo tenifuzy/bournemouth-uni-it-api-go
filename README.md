@@ -1,6 +1,6 @@
 # Bournemouth University IT Student API
 
-A comprehensive RESTful API for managing Bournemouth University IT students built with Go and Gin framework, featuring multiple deployment options including Docker, Vagrant, and CI/CD pipelines.
+A comprehensive RESTful API for managing Bournemouth University IT students built with Go and Gin framework, featuring multiple deployment options including Docker, Vagrant, Kubernetes, and Helm with production-ready configurations.
 
 ## 🚀 Features
 
@@ -16,7 +16,10 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - ✅ **Containerized deployment**
 - ✅ **Vagrant virtualization**
 - ✅ **Kubernetes deployment** with Vault & ESO
+- ✅ **Helm package management**
+- ✅ **Production-ready security**
 - ✅ **CI/CD pipeline** with GitHub Actions
+- ✅ **Monitoring & Observability**
 
 ## 📋 Prerequisites
 
@@ -34,15 +37,15 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - **VirtualBox** 6.1+ installed
 - At least **4GB RAM** available for the VM
 
-### For Kubernetes Deployment
+### For Kubernetes/Helm Deployment
 - **Kubernetes cluster** (v1.20+) with kubectl configured
-- **Helm** (v3.0+) for External Secrets Operator
+- **Helm** (v3.0+) for package management
 - **Persistent Volume** support
 - **LoadBalancer** or **Ingress Controller** support
 
-## 🏗️ Architecture
+## 🏗️ Architecture Overview
 
-### Standard Deployment
+### Standard Docker Deployment
 - **1 API container** on port 8080
 - **1 PostgreSQL container** on port 5433
 - **Web interface** served at root path
@@ -54,11 +57,105 @@ A comprehensive RESTful API for managing Bournemouth University IT students buil
 - **Ubuntu 24.04 VM** with 2GB RAM, 2 CPUs
 
 ### Kubernetes Deployment (Production Ready)
-- **2 API replicas** with auto-scaling capability
-- **PostgreSQL** with persistent storage
-- **HashiCorp Vault** for secret management
-- **External Secrets Operator** for secret synchronization
-- **Ingress** and **LoadBalancer** for external access
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Kubernetes Cluster                       │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                Namespace: student-api                   │ │
+│  │                                                         │ │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │ │
+│  │  │   Ingress   │  │ LoadBalancer │  │   Student API   │ │ │
+│  │  │             │  │   Service    │  │  (2 replicas)   │ │ │
+│  │  └─────────────┘  └──────────────┘  └─────────────────┘ │ │
+│  │         │                 │                   │         │ │
+│  │         └─────────────────┼───────────────────┘         │ │
+│  │                           │                             │ │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │ │
+│  │  │ ConfigMap   │  │ PostgreSQL   │  │ External Secrets│ │ │
+│  │  │             │  │  Database    │  │   Operator      │ │ │
+│  │  └─────────────┘  └──────────────┘  └─────────────────┘ │ │
+│  │                           │                   │         │ │
+│  │                           │         ┌─────────────────┐ │ │
+│  │                           │         │  HashiCorp      │ │ │
+│  │                           │         │     Vault       │ │ │
+│  │                           │         └─────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Helm Charts Architecture
+- **student-api**: Main REST API application
+- **postgresql**: PostgreSQL database with ESO integration
+- **vault**: HashiCorp Vault for secrets management
+- **external-secrets**: External Secrets Operator for secret sync
+
+## 📋 Prerequisites
+
+### For Local Development
+- **Go 1.21** or higher
+- **PostgreSQL 12** or higher
+- **Git** for cloning the repository
+
+### For Docker Deployment
+- **Docker** 20.10+ and **Docker Compose** v2
+- **Make** (optional, for convenience commands)
+
+### For Vagrant Deployment
+- **Vagrant** 2.3+ installed
+- **VirtualBox** 6.1+ installed
+- At least **4GB RAM** available for the VM
+
+### For Kubernetes/Helm Deployment
+- **Kubernetes cluster** (v1.20+) with kubectl configured
+- **Helm** (v3.0+) for package management
+- **Persistent Volume** support
+- **LoadBalancer** or **Ingress Controller** support
+
+## 🏗️ Architecture Overview
+
+### Standard Docker Deployment
+- **1 API container** on port 8080
+- **1 PostgreSQL container** on port 5433
+- **Web interface** served at root path
+
+### Vagrant Deployment (Load Balanced)
+- **2 API containers** on ports 8081, 8082
+- **1 PostgreSQL container** with persistent data
+- **1 Nginx load balancer** on port 8080
+- **Ubuntu 24.04 VM** with 2GB RAM, 2 CPUs
+
+### Kubernetes Deployment (Production Ready)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Kubernetes Cluster                       │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │                Namespace: student-api                   │ │
+│  │                                                         │ │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │ │
+│  │  │   Ingress   │  │ LoadBalancer │  │   Student API   │ │ │
+│  │  │             │  │   Service    │  │  (2 replicas)   │ │ │
+│  │  └─────────────┘  └──────────────┘  └─────────────────┘ │ │
+│  │         │                 │                   │         │ │
+│  │         └─────────────────┼───────────────────┘         │ │
+│  │                           │                             │ │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐ │ │
+│  │  │ ConfigMap   │  │ PostgreSQL   │  │ External Secrets│ │ │
+│  │  │             │  │  Database    │  │   Operator      │ │ │
+│  │  └─────────────┘  └──────────────┘  └─────────────────┘ │ │
+│  │                           │                   │         │ │
+│  │                           │         ┌─────────────────┐ │ │
+│  │                           │         │  HashiCorp      │ │ │
+│  │                           │         │     Vault       │ │ │
+│  │                           │         └─────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Helm Charts Architecture
+- **student-api**: Main REST API application
+- **postgresql**: PostgreSQL database with ESO integration
+- **vault**: HashiCorp Vault for secrets management
+- **external-secrets**: External Secrets Operator for secret sync
 
 ## 🚀 Quick Start Guide
 
@@ -161,7 +258,45 @@ vagrant halt
 
 # Destroy VM
 vagrant destroy
+
+# Reload VM with new configuration
+vagrant reload
+
+# Re-run provisioning
+vagrant provision
 ```
+
+#### Load Balancer Testing
+```bash
+# Test load balancing by making multiple requests
+curl http://localhost:8080/healthcheck
+curl http://localhost:8080/api/v1/students
+
+# Check which container handled the request in logs
+vagrant ssh -c "cd /vagrant && docker logs student_api_1 --tail 5"
+vagrant ssh -c "cd /vagrant && docker logs student_api_2 --tail 5"
+```
+
+#### Vagrant Troubleshooting
+
+**VM won't start:**
+- Ensure VirtualBox is installed and running
+- Check available system resources (RAM/CPU)
+- Try `vagrant destroy && vagrant up`
+
+**VirtualBox Host-Only Network Error:**
+- Run VirtualBox as Administrator
+- In VirtualBox: File → Host Network Manager → Create new adapter
+- Or disable private network in Vagrantfile (already done)
+
+**Application not accessible:**
+- Check if containers are running: `vagrant ssh -c "docker ps"`
+- View logs: `vagrant ssh -c "cd /vagrant && make vagrant-logs"`
+- Restart deployment: `vagrant ssh -c "cd /vagrant && make vagrant-deploy"`
+
+**Port conflicts:**
+- Ensure ports 8080, 8081, 8082 are not in use on host
+- Modify port mappings in Vagrantfile if needed
 
 **Access Points:**
 - **Load Balanced API**: http://localhost:8080
@@ -175,6 +310,9 @@ vagrant destroy
 # Verify installations
 kubectl version --client
 helm version
+
+# Install Helm if needed
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ```
 
 #### Deploy with Helm Charts
@@ -191,25 +329,105 @@ chmod +x helm/deploy-all-helm.sh
 helm\deploy-all-helm.bat
 ```
 
-#### Helm Management
+#### Individual Chart Deployment
+```bash
+# 1. External Secrets Operator
+helm install external-secrets ./helm/external-secrets \
+  --create-namespace \
+  --wait --timeout=300s
+
+# 2. HashiCorp Vault
+helm install vault ./helm/vault \
+  --namespace student-api \
+  --create-namespace \
+  --wait --timeout=300s
+
+# 3. PostgreSQL Database
+helm install postgresql ./helm/postgresql \
+  --namespace student-api \
+  --wait --timeout=300s
+
+# 4. Student API Application
+helm install student-api ./helm/student-api \
+  --namespace student-api \
+  --wait --timeout=300s
+```
+
+#### Helm Management Commands
 ```bash
 # List all releases
 helm list --all-namespaces
 
 # Check release status
 helm status student-api -n student-api
+helm status postgresql -n student-api
+helm status vault -n student-api
 
-# Upgrade application
-helm upgrade student-api ./helm/student-api -n student-api
+# Upgrade releases
+helm upgrade student-api ./helm/student-api \
+  --set app.replicas=3 \
+  --namespace student-api
 
-# Scale application
-helm upgrade student-api ./helm/student-api --set app.replicas=3 -n student-api
+# Rollback releases
+helm history student-api -n student-api
+helm rollback student-api -n student-api
 
-# Uninstall all releases
+# Uninstall releases
 helm uninstall student-api -n student-api
 helm uninstall postgresql -n student-api
 helm uninstall vault -n student-api
 helm uninstall external-secrets -n external-secrets-system
+```
+
+#### Helm Configuration Examples
+
+**Production Values (production-values.yaml):**
+```yaml
+app:
+  replicas: 3
+  image:
+    tag: stable
+    pullPolicy: Always
+
+service:
+  type: ClusterIP
+  loadBalancer:
+    enabled: true
+
+ingress:
+  enabled: true
+  host: api.bournemouth.ac.uk
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "200m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+```
+
+**Deploy with Custom Values:**
+```bash
+helm install student-api ./helm/student-api \
+  --values production-values.yaml \
+  --namespace student-api-prod \
+  --create-namespace
+```
+
+#### Helm Testing and Validation
+```bash
+# Dry run deployment
+helm install student-api ./helm/student-api \
+  --dry-run --debug \
+  --namespace student-api
+
+# Template validation
+helm template student-api ./helm/student-api \
+  --namespace student-api
+
+# View release manifests
+helm get manifest student-api -n student-api
 ```
 
 **Access Points:**
@@ -224,6 +442,8 @@ helm uninstall external-secrets -n external-secrets-system
 - 🚀 **Init containers** for database migrations
 - 📊 **Configurable values** via Helm values.yaml
 - 🌐 **Multiple access methods** (LoadBalancer, Ingress)
+- 🔄 **Easy rollbacks** and version management
+- 🧪 **Template validation** and dry-run capabilities
 
 ### Option 4: Kubernetes Deployment (Production Ready)
 
@@ -232,9 +452,14 @@ helm uninstall external-secrets -n external-secrets-system
 # Verify installations
 kubectl version --client
 helm version
+
+# Cluster requirements
+# - Minimum 2 CPU cores and 4GB RAM
+# - Persistent Volume support
+# - LoadBalancer or Ingress Controller support
 ```
 
-#### Deploy to Kubernetes
+#### Automated Deployment (Recommended)
 ```bash
 # Clone repository
 git clone https://github.com/tenifuzy/bournemouth-uni-it-api-go.git
@@ -248,22 +473,164 @@ chmod +x k8s/deploy-all.sh
 k8s\deploy-all.bat
 ```
 
-#### Kubernetes Management
+#### Manual Step-by-Step Deployment
 ```bash
-# Check deployment status
+# Step 1: Create Namespace
+kubectl apply -f k8s/namespaces/
+
+# Step 2: Deploy ConfigMaps
+kubectl apply -f k8s/configmaps/
+
+# Step 3: Deploy HashiCorp Vault
+kubectl apply -f k8s/vault/
+kubectl wait --for=condition=available --timeout=300s deployment/vault -n student-api
+
+# Step 4: Install External Secrets Operator
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+helm install external-secrets external-secrets/external-secrets \
+  -n external-secrets-system --create-namespace
+kubectl wait --for=condition=available --timeout=300s \
+  deployment/external-secrets -n external-secrets-system
+
+# Step 5: Configure External Secrets
+kubectl apply -f k8s/eso/
+kubectl wait --for=condition=Ready --timeout=60s \
+  externalsecret/db-credentials -n student-api
+
+# Step 6: Deploy Database
+kubectl apply -f k8s/db/
+kubectl wait --for=condition=available --timeout=300s \
+  deployment/postgres-db -n student-api
+
+# Step 7: Deploy Application
+kubectl apply -f k8s/app/
+kubectl wait --for=condition=available --timeout=300s \
+  deployment/student-api -n student-api
+
+# Step 8: Configure Ingress
+kubectl apply -f k8s/ingress/
+```
+
+#### Verification and Testing
+```bash
+# Check all resources
 kubectl get all -n student-api
 
+# Check pods placement
+kubectl get pods -n student-api -o wide
+
+# Verify database migration
+kubectl logs -l app=student-api -c migration -n student-api
+
+# Verify Vault integration
+kubectl get secret db-secret -n student-api -o yaml
+kubectl get externalsecret -n student-api
+
+# Test API endpoints using port forward
+kubectl port-forward svc/student-api-service 8080:8080 -n student-api
+curl http://localhost:8080/healthcheck
+curl http://localhost:8080/api/v1/students
+
+# Test with LoadBalancer (if available)
+EXTERNAL_IP=$(kubectl get service student-api-loadbalancer -n student-api \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+curl http://$EXTERNAL_IP:8080/healthcheck
+```
+
+#### Kubernetes Management
+```bash
 # View logs
 kubectl logs -l app=student-api -n student-api
-
-# Port forward for local access
-kubectl port-forward svc/student-api-service 8080:8080 -n student-api
+kubectl logs -l app=postgres-db -n student-api
+kubectl logs -l app=vault -n student-api
 
 # Scale application
 kubectl scale deployment student-api --replicas=3 -n student-api
 
-# Clean up
+# Update application
+kubectl set image deployment/student-api \
+  student-api=tenifuzy01/v1:new-tag -n student-api
+kubectl rollout status deployment/student-api -n student-api
+
+# Rollback if needed
+kubectl rollout undo deployment/student-api -n student-api
+
+# Access database
+kubectl exec -it deployment/postgres-db -n student-api -- \
+  psql -U postgres -d student_db
+
+# Manual migration (if needed)
+kubectl exec -it deployment/student-api -n student-api -- \
+  /app/main migrate
+```
+
+#### Kubernetes Troubleshooting
+
+**Pods Not Starting:**
+```bash
+kubectl describe pod <pod-name> -n student-api
+kubectl get events -n student-api --sort-by=.metadata.creationTimestamp
+```
+
+**Database Connection Issues:**
+```bash
+kubectl logs -l app=postgres-db -n student-api
+kubectl exec -it deployment/student-api -n student-api -- \
+  nc -zv postgres-service 5432
+```
+
+**Secret Not Created by ESO:**
+```bash
+kubectl logs -l app.kubernetes.io/name=external-secrets -n external-secrets-system
+kubectl describe externalsecret db-credentials -n student-api
+kubectl exec -it deployment/vault -n student-api -- \
+  vault kv get secret/db-credentials
+```
+
+**Performance Issues:**
+```bash
+kubectl top pods -n student-api
+kubectl top nodes
+kubectl describe deployment student-api -n student-api
+```
+
+#### Configuration Details
+
+**Environment Variables (ConfigMap):**
+- `DB_HOST`: postgres-service
+- `DB_PORT`: 5432
+- `DB_NAME`: student_db
+- `DB_SSL_MODE`: disable
+- `SERVER_PORT`: 8080
+
+**Secrets (Vault + ESO):**
+- `DB_USER`: postgres (stored in Vault)
+- `DB_PASSWORD`: postgres (stored in Vault)
+
+**Resource Limits:**
+```yaml
+# Application
+requests: 128Mi memory, 100m CPU
+limits: 256Mi memory, 200m CPU
+
+# Database
+requests: 256Mi memory, 250m CPU
+limits: 512Mi memory, 500m CPU
+
+# Vault
+requests: 128Mi memory, 100m CPU
+limits: 256Mi memory, 200m CPU
+```
+
+#### Clean Up
+```bash
+# Remove application
 kubectl delete namespace student-api
+
+# Remove ESO (if no longer needed)
+helm uninstall external-secrets -n external-secrets-system
+kubectl delete namespace external-secrets-system
 ```
 
 **Access Points:**
@@ -277,6 +644,9 @@ kubectl delete namespace student-api
 - 🚀 **Init containers** for database migrations
 - 📊 **Health checks** and **resource limits**
 - 🌐 **Multiple access methods** (LoadBalancer, Ingress)
+- 🔒 **Network security** with ClusterIP services
+- 📊 **Monitoring** and comprehensive logging
+- ⚙️ **Auto-scaling** capability
 
 ### Option 5: Local Development
 

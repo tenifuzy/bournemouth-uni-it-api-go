@@ -20,10 +20,7 @@ spec:
         app: {{ .Values.postgresql.name }}
         tier: database
     spec:
-      {{- if .Values.postgresql.nodeSelector }}
-      nodeSelector:
-        {{- toYaml .Values.postgresql.nodeSelector | nindent 8 }}
-      {{- end }}
+
       containers:
       - name: postgres
         image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
@@ -38,11 +35,9 @@ spec:
           value: "{{ .Values.postgresql.database.user }}"
         - name: POSTGRES_PASSWORD
           value: "{{ .Values.postgresql.database.password }}"
-        {{- if .Values.postgresql.persistence.enabled }}
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
-        {{- end }}
         resources:
           {{- toYaml .Values.postgresql.resources | nindent 10 }}
         livenessProbe:
@@ -61,9 +56,6 @@ spec:
             - {{ .Values.postgresql.database.user }}
           initialDelaySeconds: {{ .Values.postgresql.readinessProbe.initialDelaySeconds }}
           periodSeconds: {{ .Values.postgresql.readinessProbe.periodSeconds }}
-      {{- if .Values.postgresql.persistence.enabled }}
       volumes:
       - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: {{ .Values.postgresql.name }}-pvc
-      {{- end }}
+        emptyDir: {}

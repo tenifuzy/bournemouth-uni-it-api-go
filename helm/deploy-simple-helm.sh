@@ -15,56 +15,43 @@ wait_for_deployment() {
 
 # Step 1: Clean up existing resources
 echo "🧹 Cleaning up existing resources..."
-helm uninstall student-api -n student-api --ignore-not-found || true
-helm uninstall postgresql -n student-api --ignore-not-found || true
-kubectl delete namespace student-api --ignore-not-found || true
+helm uninstall student-api -n student-api --ignore-not-found
+helm uninstall postgresql -n student-api --ignore-not-found
+kubectl delete namespace student-api --ignore-not-found
 
 echo "⏳ Waiting for cleanup..."
-sleep 10
+sleep 5
 
 # Step 2: Create namespace
 echo "🏷️ Creating namespace..."
 kubectl create namespace student-api
 
-# Step 3: Create database secret manually
+# Step 3: Create database secret
 echo "🔐 Creating database secret..."
-kubectl create secret generic db-secret \
+kubectl create secret generic db-secret -n student-api \
   --from-literal=DB_USER=postgres \
-  --from-literal=DB_PASSWORD=postgres \
-  -n student-api
+  --from-literal=DB_PASSWORD=postgres
 
-# Step 4: Deploy PostgreSQL (with ESO disabled)
+# Step 4: Deploy PostgreSQL
 echo "🗄️ Deploying PostgreSQL database..."
 helm install postgresql ./postgresql \
   --namespace student-api \
-  --set externalSecrets.enabled=false \
   --wait --timeout=300s
-
 wait_for_deployment "postgres-db" "student-api"
 
-# Step 5: Deploy Student API (with ESO disabled)
+# Step 5: Deploy Student API (without wait to see what happens)
 echo "🚀 Deploying Student API application..."
 helm install student-api ./student-api \
-  --namespace student-api \
-  --set externalSecrets.enabled=false \
-  --wait --timeout=300s
+  --namespace student-api
 
-wait_for_deployment "student-api" "student-api"
-
-echo ""
-echo "✅ Simple Helm deployment completed successfully!"
-echo ""
-echo "📋 Access Information:"
-echo "====================="
-
-kubectl get services -n student-api
+echo "📋 Checking deployment status..."
+kubectl get pods -n student-api
+kubectl get deployments -n student-api
 
 echo ""
-echo "🌐 Access URLs:"
-echo "   Port Forward: kubectl port-forward svc/student-api-service 8080:8080 -n student-api"
+echo "🔍 If pods are not ready, check with:"
+echo "kubectl describe pod -l app=student-api -n student-api"
+echo "kubectl logs -l app=student-api -n student-api"
 echo ""
-
-echo "🧪 Test Commands:"
-echo "================"
-echo "curl http://localhost:8080/healthcheck"
-echo "curl http://localhost:8080/api/v1/students"
+echo "🌐 To access the API (once ready):"
+echo "kubectl port-forward svc/student-api-service 8080:8080 -n student-api"

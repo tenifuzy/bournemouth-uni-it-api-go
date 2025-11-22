@@ -33,19 +33,11 @@ spec:
         envFrom:
         - configMapRef:
             name: {{ .Values.postgresql.name }}-config
-        - secretRef:
-            name: {{ .Values.postgresql.name }}-secret
         env:
         - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.postgresql.name }}-secret
-              key: POSTGRES_USER
+          value: "{{ .Values.postgresql.database.user }}"
         - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ .Values.postgresql.name }}-secret
-              key: POSTGRES_PASSWORD
+          value: "{{ .Values.postgresql.database.password }}"
         {{- if .Values.postgresql.persistence.enabled }}
         volumeMounts:
         - name: postgres-storage

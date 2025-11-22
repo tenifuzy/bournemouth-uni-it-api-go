@@ -20,10 +20,7 @@ spec:
         app: {{ .Values.app.name }}
         tier: application
     spec:
-      {{- if .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml .Values.nodeSelector | nindent 8 }}
-      {{- end }}
+
       initContainers:
       - name: migration
         image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"

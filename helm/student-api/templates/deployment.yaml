@@ -29,7 +29,7 @@ spec:
         - configMapRef:
             name: {{ .Values.app.name }}-config
         - secretRef:
-            name: {{ .Values.app.name }}-secret
+            name: db-secret
         command:
         - /bin/sh
         - -c
@@ -53,7 +53,7 @@ spec:
         - configMapRef:
             name: {{ .Values.app.name }}-config
         - secretRef:
-            name: {{ .Values.app.name }}-secret
+            name: db-secret
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         livenessProbe:
